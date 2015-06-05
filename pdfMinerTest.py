@@ -9,9 +9,10 @@ from SegmentedPage import *
 import codecs
 import sys
 from subprocess import check_call, CalledProcessError
-from os.path import isfile, splitext
+from os.path import isfile, splitext, isdir
 import Image
 from os import listdir
+
 
 #Required packages pdfMiner, ImageMagick
 
@@ -37,15 +38,16 @@ class Article:
         size_count = dict()
         for page in self.pages:
             for segment in page.segments:
-                for k, v in segment.font_count.items():
-                    if k in page_font_count:
-                        page_font_count[k] += v
+                if isinstance(segment, LTTextLine):
+                    for k, v in segment.font_count.items():
+                        if k in page_font_count:
+                            page_font_count[k] += v
+                        else:
+                            page_font_count[k] = v
+                    if segment.font_size in size_count:
+                        size_count[segment.font_size] += segment.font_count[segment.font]
                     else:
-                        page_font_count[k] = v
-                if segment.font_size in size_count:
-                    size_count[segment.font_size] += segment.font_count[segment.font]
-                else:
-                    size_count[segment.font_size] = segment.font_count[segment.font]
+                        size_count[segment.font_size] = segment.font_count[segment.font]
 
         self.default_font = find_most_frequent_item(page_font_count)
         self.default_size = find_most_frequent_item(size_count)
@@ -70,10 +72,10 @@ class Article:
     def _identify_authors(self, page):
         candidate_segment = 0
         distance = float("inf")
-        title_bottom_center = self.title.bbox_centers()[1]
+        title_bottom_center = self.title.bottom_center()
         for segment in page.segments:
             if segment is not self.title:
-                segment_top_center = segment.bbox_centers()[3]
+                segment_top_center = segment.top_center()
                 seg_dis = math.sqrt( math.fabs(title_bottom_center[0] - segment_top_center[0])**2 + math.fabs(title_bottom_center[1] - segment_top_center[1])**2)
                 if seg_dis < distance:
                     distance = seg_dis
@@ -124,7 +126,6 @@ if __name__ == "__main__":
 
     file_name = sys.argv[1]
     fp = open(file_name, "rb")
-    #pages = get_pages("Papers/journal.pone.0123237.pdf", images_folder='./images')
 
     parser = PDFParser(fp)
     document = PDFDocument(parser, "")
@@ -139,8 +140,10 @@ if __name__ == "__main__":
 
     pdf_name = file_name.split(".pdf")[0].split("/")[-1]
 
+    if isdir(pdf_name+"_lines"):
+        check_call(["rm", "-R", pdf_name+"_lines"])
+
     check_call(["mkdir", pdf_name+"_lines"])
-    check_call(["mkdir", pdf_name+"_segments"])
 
 
     pages = list()
@@ -149,8 +152,8 @@ if __name__ == "__main__":
         interpreter.process_page(pdf_page)
         layout = device.get_result()
         page = Page(layout, page_number=page_count+1, jpg=page_images[page_count])
+        page.find_segment_neighbors()
         pages.append( page )
-        page.save_segments("./"+pdf_name+"_segments/")
         page.save_line("./"+pdf_name+"_lines/")
         page_count += 1
 

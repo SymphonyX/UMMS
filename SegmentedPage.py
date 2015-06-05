@@ -21,7 +21,10 @@ class Segment:
         self.font_size = 0
         self.font_count = dict()
         self.bbox =(float("inf"), float("inf"), float("-inf"), float("-inf"))
-
+        self.left_neighbor = None
+        self.right_neighbor = None
+        self.top_neighbor = None
+        self.bottom_neighbor = None
 
     def determine_bounding_box(self):
         x0 = float("inf")
@@ -40,14 +43,17 @@ class Segment:
 
         self.bbox = (x0, y0, x1, y1)
 
-    def bbox_centers(self):
-        left_center = (self.bbox[0], (self.bbox[3] - self.bbox[1]) / 2.0)
-        right_center = (self.bbox[2], (self.bbox[3] - self.bbox[1]) / 2.0)
-        bottom_center = ( (self.bbox[2] - self.bbox[0]) / 2.0, self.bbox[1])
-        top_center = ( (self.bbox[2] - self.bbox[0]) / 2.0, self.bbox[3])
+    def top_center(self):
+        return (self.bbox[0] + ((self.bbox[2] - self.bbox[0]) / 2.0), self.bbox[3])
 
-        return (left_center, bottom_center, right_center, top_center)
+    def bottom_center(self):
+        return (self.bbox[0] + ((self.bbox[2] - self.bbox[0]) / 2.0), self.bbox[1])
 
+    def left_center(self):
+        return (self.bbox[0], self.bbox[1] + ((self.bbox[3] - self.bbox[1]) / 2.0))
+
+    def right_center(self):
+        return (self.bbox[2], self.bbox[1] + ((self.bbox[3] - self.bbox[1]) / 2.0))
 
     def addLine(self, lt_line):
         self.lines.append(lt_line)
@@ -68,7 +74,8 @@ class Segment:
     def __str__(self):
         string = ""
         for l in self.lines:
-            string += l.get_text()
+            if isinstance(l, LTTextLine):
+                string += l.get_text()
         return string
 
     def __repr__(self):
@@ -77,6 +84,10 @@ class Segment:
 
 class Page(LTPage):
 
+    @staticmethod
+    def distance(point1, point2):
+        return math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
+
     def __init__(self, lt_page, page_number, jpg=None):
         self.page_num = page_number
         self.page = lt_page
@@ -84,82 +95,89 @@ class Page(LTPage):
         self._parse_text()
         self.jpg = jpg
 
-    def _jpg_with_bbox(self, mark_types="segments"):
+    def _jpg_with_bbox(self):
         jpg_copy = self.jpg.copy()
         draw = ImageDraw.Draw(jpg_copy)
         draw.setfill(0)
 
-        if mark_types == "segments":
-            for segment in self.segments:
-                bbox = segment.bbox
-                draw.rectangle([bbox[0], self.jpg.size[1]-bbox[3], bbox[2], self.jpg.size[1]-bbox[1]], fill=None, outline="red")
-        else: # mark_types == "lines":
-            for segment in self.segments:
-                for line in segment.lines:
-                    bbox = line.bbox
-                    draw.rectangle([bbox[0], self.jpg.size[1]-bbox[3], bbox[2], self.jpg.size[1]-bbox[1]], fill=None, outline="red")
+        color = "red"
+        for segment in self.segments:
+            for line in segment.lines:
+                if isinstance(line, LTTextLine):
+                    color = "red"
+                elif isinstance(line, LTRect):
+                    color = "blue"
+                elif isinstance(line, LTCurve):
+                    color = "yellow"
+                elif isinstance(line, LTImage):
+                    color = "green"
+                bbox = line.bbox
+                draw.rectangle([bbox[0], self.jpg.size[1]-bbox[3], bbox[2], self.jpg.size[1]-bbox[1]], fill=None, outline=color)
+
+            if segment.top_neighbor is not None:
+                top_center = segment.top_center()
+                bottom_center = segment.top_neighbor.bottom_center()
+                draw.line( (top_center[0], self.jpg.size[1]-top_center[1], bottom_center[0], self.jpg.size[1]-bottom_center[1]), fill=color)
 
         del draw
         return jpg_copy
 
-    def save_segments(self, path):
-        ImageFile.MAXBLOCK = 2**30
-        img = self._jpg_with_bbox(mark_types="segments")
-        img.save(path+"page_1"+str(self.page_num)+".jpg", "JPEG", quality=100, optimize=True, progressive=True)
-
     def save_line(self, path):
         ImageFile.MAXBLOCK = 2**30
-        img = self._jpg_with_bbox(mark_types="lines")
+        img = self._jpg_with_bbox()
         img.save(path+"page_1"+str(self.page_num)+".jpg", "JPEG", quality=100, optimize=True, progressive=True)
 
-
-    def show_segments(self):
-        img = self._jpg_with_bbox(mark_types="segments")
-        img.show()
-
     def show_lines(self):
-        img = self._jpg_with_bbox(mark_types="lines")
+        img = self._jpg_with_bbox()
         img.show()
 
     def _parse_text(self):
         for element in self.page._objs:
-            text, distances = [], []
             if isinstance(element, LTTextBox):
-                for i, line in enumerate(element._objs):
-                    if i == 0:
-                        distances.append( (0, 0) )
+                for line in element._objs:
+                    segment = Segment()
+                    segment.addLine(line)
+                    segment.determine_bounding_box()
+                    segment.determine_frequent_font()
+                    self.segments.append(segment)
+            elif isinstance(element, LTRect) or isinstance(element, LTCurve) or isinstance(element, LTImage):
+                segment = Segment()
+                segment.addLine(element)
+                segment.determine_bounding_box()
+                self.segments.append(segment)
+            elif isinstance(element, LTFigure):
+                for line in element._objs:
+                    segment = Segment()
+                    segment.addLine(line)
+                    segment.determine_bounding_box()
+                    self.segments.append(segment)
+
+    def find_segment_neighbors(self):
+        tops = sorted(self.segments, key=lambda seg: seg.bbox[3], reverse=True)
+        bottoms = sorted(self.segments, key=lambda seg: seg.bbox[1], reverse=True)
+        lefts = sorted(self.segments, key=lambda seg: seg.bbox[0])
+        rights = sorted(self.segments, key=lambda seg: seg.bbox[2])
+        slack = 10
+
+        for i, segment in enumerate(tops):
+            if i == 0: continue
+            done = False
+            for neighbor in bottoms:
+                if segment is not neighbor:
+                    neighbor_bottom = neighbor.bottom_center()
+                    segment_top = segment.top_center()
+                    if neighbor_bottom[1]+slack < segment_top[1]:
+                        done = True
+                        break
+                    if segment.top_neighbor == None:
+                        segment.top_neighbor = neighbor
                     else:
-                        distances.append( (line.bbox[0] - element._objs[i-1].bbox[0], element._objs[i-1].bbox[1] - line.bbox[3]) )
+                        y_diff = (segment.top_neighbor.bottom_center()[1] - segment_top[1]) - (neighbor_bottom[1] - segment_top[1])
+                        if y_diff > slack or ((y_diff > -slack or y_diff < slack) and Page.distance(segment.top_neighbor.bottom_center(), segment_top) > Page.distance(neighbor_bottom, segment_top)):
+                            segment.top_neighbor = neighbor
 
-                self._determine_segments(distances, element)
 
-    def _line_belongs_to_segment(self, distances, line_index):
-        if (distances[line_index][1] < 0) or \
-                (line_index == len(distances)-1 and distances[line_index-1][1] - distances[line_index][1] < 5.0) or \
-                (line_index < len(distances)-1 and distances[line_index][1] - distances[line_index+1][1] < 1.0):
-            return True
 
-        return False
-
-    def _determine_segments(self, distances, element):
-        newSegment = Segment()
-        self.segments.append(newSegment)
-        for i, dis in enumerate(distances):
-            line = element._objs[i]
-            if i == 0:
-                newSegment.addLine(line)
-            else:
-                #Only looking at vertical distance now...Not quite right yet.
-                if self._line_belongs_to_segment(distances, i):
-                    newSegment.addLine(line)
-                else:
-                    newSegment.determine_frequent_font()
-                    newSegment.determine_bounding_box()
-                    newSegment = Segment()
-                    self.segments.append(newSegment)
-                    newSegment.addLine(line)
-        newSegment.determine_frequent_font()
-        newSegment.determine_bounding_box()
 
 
 
