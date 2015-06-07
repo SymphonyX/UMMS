@@ -45,21 +45,21 @@ class Page(LTPage):
 
         color = "red"
         for segment in self.segments:
-            if style == "lines":
-                for line in segment.lines:
-                    if isinstance(line, LTTextLine):
-                        color = "red"
-                    elif isinstance(line, LTRect):
-                        color = "blue"
-                    elif isinstance(line, LTCurve):
-                        color = "yellow"
-                    elif isinstance(line, LTImage):
-                        color = "green"
-                    bbox = line.bbox
-                    draw.rectangle([bbox[0], self.jpg.size[1]-bbox[3], bbox[2], self.jpg.size[1]-bbox[1]], fill=None, outline=color)
-            elif style == "segments":
-                bbox = segment.bbox
+            for line in segment.lines:
+                if isinstance(line, LTTextLine):
+                    color = "red"
+                elif isinstance(line, LTRect):
+                    color = "blue"
+                elif isinstance(line, LTCurve):
+                    color = "yellow"
+                elif isinstance(line, LTImage):
+                    color = "green"
+                bbox = line.bbox
                 draw.rectangle([bbox[0], self.jpg.size[1]-bbox[3], bbox[2], self.jpg.size[1]-bbox[1]], fill=None, outline=color)
+            if style == "segments":
+                bbox = segment.bbox
+                draw.rectangle([bbox[0], self.jpg.size[1]-bbox[3], bbox[2], self.jpg.size[1]-bbox[1]], fill=None, outline="black")
+
 
             if segment.top_neighbor is not None:
                 top_center = segment.top_center()
@@ -136,7 +136,8 @@ class Page(LTPage):
         distances = list()
         for segment in self.segments:
             if segment.top_neighbor is not None:
-                distances.append( Page.distance( (0, segment.top_center()[1]), (0, segment.top_neighbor.bottom_center()[1])  ))
+                distance = Page.distance( (0, segment.top_center()[1]), (0, segment.top_neighbor.bottom_center()[1])  )
+                distances.append( distance )
 
         mean = np.mean(distances)
         std = np.std(distances)
@@ -148,7 +149,8 @@ class Page(LTPage):
             for i in range(len(self.segments)):
                 segment = self.segments[i]
                 top_neighbor = segment.top_neighbor
-                if top_neighbor is not None and Page.distance( (0, segment.top_center()[1]), (0, top_neighbor.bottom_center()[1]) ) < mean:
+                slack = 0 if (top_neighbor == None or top_neighbor.font_type != segment.font_type) else 10
+                if top_neighbor is not None and (top_neighbor.font_size == segment.font_size and top_neighbor.font_family == segment.font_family) and Page.distance( (0, segment.top_center()[1]), (0, top_neighbor.bottom_center()[1]) ) < mean + slack:
                     for line in segment.lines:
                         top_neighbor.addLine(line)
 

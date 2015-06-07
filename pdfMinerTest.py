@@ -155,10 +155,10 @@ if __name__ == "__main__":
         layout = device.get_result()
         page = Page(layout, page_number=page_count+1, jpg=page_images[page_count])
         page.find_segment_top_neighbors()
-        page.concatenate_top_neighbor()
-        pages.append( page )
         page.save_line("./"+pdf_name+"_lines/")
+        page.concatenate_top_neighbor()
         page.save_segments("./"+pdf_name+"_segments/")
+        pages.append( page )
         page_count += 1
 
 
