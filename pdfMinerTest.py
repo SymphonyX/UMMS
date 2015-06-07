@@ -3,7 +3,6 @@ from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfinterp import PDFResourceManager
 from pdfminer.pdfinterp import PDFPageInterpreter
-from pdfminer.layout import *
 from pdfminer.converter import PDFPageAggregator
 from SegmentedPage import *
 import codecs
@@ -12,7 +11,7 @@ from subprocess import check_call, CalledProcessError
 from os.path import isfile, splitext, isdir
 import Image
 from os import listdir
-
+from Segment import find_most_frequent_item
 
 #Required packages pdfMiner, ImageMagick
 
@@ -142,8 +141,11 @@ if __name__ == "__main__":
 
     if isdir(pdf_name+"_lines"):
         check_call(["rm", "-R", pdf_name+"_lines"])
-
     check_call(["mkdir", pdf_name+"_lines"])
+
+    if isdir(pdf_name+"_segments"):
+        check_call(["rm", "-R", pdf_name+"_segments"])
+    check_call(["mkdir", pdf_name+"_segments"])
 
 
     pages = list()
@@ -152,9 +154,11 @@ if __name__ == "__main__":
         interpreter.process_page(pdf_page)
         layout = device.get_result()
         page = Page(layout, page_number=page_count+1, jpg=page_images[page_count])
-        page.find_segment_neighbors()
+        page.find_segment_top_neighbors()
+        page.concatenate_top_neighbor()
         pages.append( page )
         page.save_line("./"+pdf_name+"_lines/")
+        page.save_segments("./"+pdf_name+"_segments/")
         page_count += 1
 
 
@@ -162,8 +166,8 @@ if __name__ == "__main__":
 
     pdfArticle = Article(pages)
     pdfArticle.find_default_fonts()
-    pdfArticle.identify_segment_types()
-    pdfArticle.save_content()
+#    pdfArticle.identify_segment_types()
+#    pdfArticle.save_content()
 
 
 
