@@ -86,6 +86,8 @@ class Segment:
         string = ""
         for l in self.lines:
             if isinstance(l, LTTextLine):
+                u = l.get_text().decode('cp1251')  # decode from cp1251 byte (str) string to unicode string
+                s = u.encode('utf-8')
                 string += l.get_text()
         return string
 

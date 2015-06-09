@@ -72,7 +72,7 @@ class Page(LTPage):
     def save_line(self, path):
         ImageFile.MAXBLOCK = 2**50
         img = self._jpg_with_bbox()
-        img.save(path+"page_"+str(self.page_num)+".jpg", "JPEG", quality=100, optimize=True, progressive=True)
+        img.save(path+"page_"+str(self.page_num)+".jpg", "JPEG", quality=60, optimize=True, progressive=True)
 
     def show_lines(self):
         img = self._jpg_with_bbox(style="lines")
@@ -81,7 +81,7 @@ class Page(LTPage):
     def save_segments(self, path):
         ImageFile.MAXBLOCK = 2**50
         img = self._jpg_with_bbox(style="segments")
-        img.save(path+"page_"+str(self.page_num)+".jpg", "JPEG", quality=100, optimize=True, progressive=True)
+        img.save(path+"page_"+str(self.page_num)+".jpg", "JPEG", quality=60, optimize=True, progressive=True)
 
     def show_segments(self):
         img = self._jpg_with_bbox()
@@ -150,7 +150,7 @@ class Page(LTPage):
                 segment = self.segments[i]
                 top_neighbor = segment.top_neighbor
                 slack = 0 if (top_neighbor == None or top_neighbor.font_type != segment.font_type) else 10
-                if top_neighbor is not None and (top_neighbor.font_size == segment.font_size and top_neighbor.font_family == segment.font_family) and Page.distance( (0, segment.top_center()[1]), (0, top_neighbor.bottom_center()[1]) ) < mean + slack:
+                if top_neighbor is not None and (math.fabs(top_neighbor.font_size - segment.font_size) < 1.0 and top_neighbor.font_family == segment.font_family) and Page.distance( (0, segment.top_center()[1]), (0, top_neighbor.bottom_center()[1]) ) < mean + slack:
                     for line in segment.lines:
                         top_neighbor.addLine(line)
 
