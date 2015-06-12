@@ -25,6 +25,7 @@ class Segment:
         self.top_neighbor = None
         self.bottom_neighbor = None
         self.neighbor_to = list()
+        self.tag = ""
 
     def _determine_bounding_box(self):
         x0 = float("inf")
@@ -82,14 +83,19 @@ class Segment:
         self.font_family = font[0]
         self.font_type =  "Regular" if len(font) == 1 else font[1]
 
-    def __str__(self):
+    def text(self):
         string = ""
         for l in self.lines:
             if isinstance(l, LTTextLine):
-                u = l.get_text().decode('cp1251')  # decode from cp1251 byte (str) string to unicode string
-                s = u.encode('utf-8')
+                #u = l.get_text().decode('cp1251')  # decode from cp1251 byte (str) string to unicode string
+                #s = u.encode('utf-8')
                 string += l.get_text()
         return string
+
+
+    def __str__(self):
+        return self.text()
+
 
     def __repr__(self):
         return self.__str__()

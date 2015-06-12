@@ -12,6 +12,7 @@ from os.path import isfile, splitext, isdir
 import Image
 from os import listdir
 from Segment import find_most_frequent_item
+from xmlParser import XML_Parser
 
 #Required packages pdfMiner, ImageMagick
 
@@ -50,36 +51,6 @@ class Article:
 
         self.default_font = find_most_frequent_item(page_font_count)
         self.default_size = find_most_frequent_item(size_count)
-
-    def identify_segment_types(self):
-
-        for page in self.pages:
-            if page.page_num == 1:
-                self.title = self._identify_article_title(page)
-                self.authors = self._identify_authors(page)
-
-
-    def _identify_article_title(self, page):
-        candidate_segment = 0
-        largest_font = 0
-        for segment in page.segments:
-            if segment.font_size > largest_font:
-                candidate_segment = segment
-                largest_font = segment.font_size
-        return candidate_segment
-
-    def _identify_authors(self, page):
-        candidate_segment = 0
-        distance = float("inf")
-        title_bottom_center = self.title.bottom_center()
-        for segment in page.segments:
-            if segment is not self.title:
-                segment_top_center = segment.top_center()
-                seg_dis = math.sqrt( math.fabs(title_bottom_center[0] - segment_top_center[0])**2 + math.fabs(title_bottom_center[1] - segment_top_center[1])**2)
-                if seg_dis < distance:
-                    distance = seg_dis
-                    candidate_segment = segment
-        return candidate_segment
 
 
     def save_content(self):
@@ -124,6 +95,7 @@ def convert(pdf):
 if __name__ == "__main__":
 
     file_name = sys.argv[1]
+    xml_file = sys.argv[2] if len(sys.argv) > 2 else ""
     fp = open(file_name, "rb")
 
     parser = PDFParser(fp)
@@ -155,9 +127,7 @@ if __name__ == "__main__":
         layout = device.get_result()
         page = Page(layout, page_number=page_count+1, jpg=page_images[page_count])
         page.find_segment_top_neighbors()
-        page.save_line("./"+pdf_name+"_lines/")
         page.concatenate_top_neighbor()
-        page.save_segments("./"+pdf_name+"_segments/")
         pages.append( page )
         page_count += 1
 
@@ -166,8 +136,19 @@ if __name__ == "__main__":
 
     pdfArticle = Article(pages)
     pdfArticle.find_default_fonts()
-#    pdfArticle.identify_segment_types()
-#    pdfArticle.save_content()
+
+    if xml_file != "":
+        XML_Parser.parse_file(xml_file)
+        for page in pages:
+            for segment in page.segments:
+                tag = XML_Parser._find_tag_for_text(segment.text())
+                segment.tag = tag
+            page.save_line("./"+pdf_name+"_lines/")
+            page.save_segments("./"+pdf_name+"_segments/")
+
+
+
+
 
 
 
