@@ -11,7 +11,6 @@ from subprocess import check_call, CalledProcessError
 from os.path import isfile, splitext, isdir
 import Image
 from os import listdir
-from xmlParser import XML_Parser
 from Article import Article
 #Required packages pdfMiner, ImageMagick
 
@@ -94,19 +93,14 @@ if __name__ == "__main__":
 
     fp.close()
 
-    pdfArticle = Article(pages)
+    pdfArticle = Article(pages, pdf_name)
     pdfArticle.find_default_fonts()
     pdfArticle.find_content_distances()
+    pdfArticle.concatenate_segments()
+    pdfArticle.save_content(xml_file)
     pdfArticle.plot_stats()
 
-    if xml_file != "":
-        XML_Parser.parse_file(xml_file)
-        for page in pages:
-            for segment in page.segments:
-                tag = XML_Parser._find_tag_for_text(segment.text())
-                segment.tag = tag
-            page.save_line("./"+pdf_name+"_lines/")
-            page.save_segments("./"+pdf_name+"_segments/")
+
 
 
 
