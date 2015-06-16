@@ -5,15 +5,14 @@ from pdfminer.pdfinterp import PDFResourceManager
 from pdfminer.pdfinterp import PDFPageInterpreter
 from pdfminer.converter import PDFPageAggregator
 from SegmentedPage import *
-import codecs
+
 import sys
 from subprocess import check_call, CalledProcessError
 from os.path import isfile, splitext, isdir
 import Image
 from os import listdir
-from Segment import find_most_frequent_item
 from xmlParser import XML_Parser
-
+from Article import Article
 #Required packages pdfMiner, ImageMagick
 
 
@@ -24,44 +23,6 @@ SEGMENT_SECTION_BODY = "SECTION BODY"
 SEGMENT_FOOTNOTE = "FOOTNOTE"
 SEGMENT_OTHER = "OTHER"
 
-class Article:
-
-    def __init__(self, pages):
-        self.pages = pages
-        self.default_font = ""
-        self.default_size = 0
-        self.title = 0
-        self.authors = 0
-
-    def find_default_fonts(self):
-        page_font_count = dict()
-        size_count = dict()
-        for page in self.pages:
-            for segment in page.segments:
-                if isinstance(segment, LTTextLine):
-                    for k, v in segment.font_count.items():
-                        if k in page_font_count:
-                            page_font_count[k] += v
-                        else:
-                            page_font_count[k] = v
-                    if segment.font_size in size_count:
-                        size_count[segment.font_size] += segment.font_count[segment.font]
-                    else:
-                        size_count[segment.font_size] = segment.font_count[segment.font]
-
-        self.default_font = find_most_frequent_item(page_font_count)
-        self.default_size = find_most_frequent_item(size_count)
-
-
-    def save_content(self):
-        f = codecs.open(self.title.__str__()+".txt", "w", "utf-8")
-        f.write("TITLE: " + self.title.__str__())
-        f.write("AUTHORS: " + self.authors.__str__())
-        for page in self.pages:
-            for segment in page.segments:
-                f.write(segment.__str__() + "\n")
-            f.write("******************************************\n\n")
-        f.close()
 
 def convert(pdf):
     '''Convert a PDF to JPG'''
@@ -127,7 +88,6 @@ if __name__ == "__main__":
         layout = device.get_result()
         page = Page(layout, page_number=page_count+1, jpg=page_images[page_count])
         page.find_segment_top_neighbors()
-        page.concatenate_top_neighbor()
         pages.append( page )
         page_count += 1
 
@@ -136,6 +96,8 @@ if __name__ == "__main__":
 
     pdfArticle = Article(pages)
     pdfArticle.find_default_fonts()
+    pdfArticle.find_content_distances()
+    pdfArticle.plot_stats()
 
     if xml_file != "":
         XML_Parser.parse_file(xml_file)

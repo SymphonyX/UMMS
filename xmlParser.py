@@ -43,12 +43,14 @@ class XML_Parser:
         XML_Parser._process_element(root)
 
         corpus = [k for k, v in parsed_xml.items()]
-        XML_Parser.VECTORIZER = CountVectorizer(min_df=1)
+        XML_Parser.VECTORIZER = CountVectorizer(ngram_range=(2, 4), token_pattern=r'\s\w+\s', min_df=1)
         XML_Parser.VECTORIZER.fit_transform(corpus)
+        analyzer = XML_Parser.VECTORIZER.build_analyzer()
         for k, v in parsed_xml.items():
-            feat = XML_Parser.VECTORIZER.transform([k]).toarray()
-            feature = Feature(feat, k)
-            bag_of_words[feature] = v
+            if len(analyzer(k)) > 0:
+                feat = XML_Parser.VECTORIZER.transform([k]).toarray()
+                feature = Feature(feat, k)
+                bag_of_words[feature] = v
 
     @staticmethod
     def _recognized_element(element):

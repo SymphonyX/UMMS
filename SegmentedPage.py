@@ -55,7 +55,7 @@ class Page(LTPage):
                 elif isinstance(line, LTImage):
                     color = "green"
                 bbox = line.bbox
-                #draw.rectangle([bbox[0], self.jpg.size[1]-bbox[3], bbox[2], self.jpg.size[1]-bbox[1]], fill=None, outline=color)
+                draw.rectangle([bbox[0], self.jpg.size[1]-bbox[3], bbox[2], self.jpg.size[1]-bbox[1]], fill=None, outline=color)
             if style == "segments":
                 bbox = segment.bbox
                 draw.rectangle([bbox[0], self.jpg.size[1]-bbox[3], bbox[2], self.jpg.size[1]-bbox[1]], fill=None, outline="black")
@@ -107,7 +107,7 @@ class Page(LTPage):
 
     def _find_top_neighbor_for_segment(self, segment):
         bottoms = sorted(self.segments, key=lambda seg: seg.bbox[1], reverse=True)
-        slack = 2
+        slack = 5
 
         for neighbor in bottoms:
             if segment is not neighbor:
