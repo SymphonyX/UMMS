@@ -52,7 +52,7 @@ class Article:
         for page in self.pages:
             for segment in page.segments:
                 if segment.top_neighbor is not None and segment.font_size > 0 and segment.font_family == segment.top_neighbor.font_family and segment.font_size == segment.top_neighbor.font_size:
-                    key = segment.font_family + "-" + str(segment.font_size)
+                    key = segment.key_for_font()
                     distance = Page.distance( (0, segment.top_center()[1]), (0, segment.bottom_center()[1]) )
                     if key not in self.stats_dict:
                         self.stats_dict[key] = [ distance ]
@@ -61,17 +61,20 @@ class Article:
 
     def concatenate_segments(self):
         for page in self.pages:
-            page.concatenate_top_neighbor()
+            page.concatenate_top_neighbor(self.stats_dict)
 
-    def save_content(self, xml_file=""):
-        if xml_file != "":
-            XML_Parser.parse_file(xml_file)
-        for page in self.pages:
-            for segment in page.segments:
-                tag = XML_Parser._find_tag_for_text(segment.text())
-                segment.tag = tag
-            page.save_line("./"+self.name+"_lines/")
-            page.save_segments("./"+self.name+"_segments/")
+    def save_content(self, xml_file="", style="lines"):
+        if style == "lines":
+            for page in self.pages:
+                page.save_line("./"+self.name+"_lines/")
+        elif style == "segments":
+            if xml_file != "":
+                XML_Parser.parse_file(xml_file)
+            for page in self.pages:
+                for segment in page.segments:
+                    tag = XML_Parser._find_tag_for_text(segment.text())
+                    segment.tag = tag
+                page.save_segments("./"+self.name+"_segments/")
 
     def plot_stats(self):
         num, labels, values, errors, num_lines = [], [], [], [], []

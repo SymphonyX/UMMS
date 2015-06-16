@@ -96,8 +96,9 @@ if __name__ == "__main__":
     pdfArticle = Article(pages, pdf_name)
     pdfArticle.find_default_fonts()
     pdfArticle.find_content_distances()
+    pdfArticle.save_content(style="lines")
     pdfArticle.concatenate_segments()
-    pdfArticle.save_content(xml_file)
+    pdfArticle.save_content(xml_file=xml_file, style="segments")
     pdfArticle.plot_stats()
 
 

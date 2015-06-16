@@ -45,18 +45,19 @@ class Page(LTPage):
 
         color = "red"
         for segment in self.segments:
-            for line in segment.lines:
-                if isinstance(line, LTTextLine):
-                    color = "red"
-                elif isinstance(line, LTRect):
-                    color = "blue"
-                elif isinstance(line, LTCurve):
-                    color = "yellow"
-                elif isinstance(line, LTImage):
-                    color = "green"
-                bbox = line.bbox
-                draw.rectangle([bbox[0], self.jpg.size[1]-bbox[3], bbox[2], self.jpg.size[1]-bbox[1]], fill=None, outline=color)
-            if style == "segments":
+            if style == "lines":
+                for line in segment.lines:
+                    if isinstance(line, LTTextLine):
+                        color = "red"
+                    elif isinstance(line, LTRect):
+                        color = "blue"
+                    elif isinstance(line, LTCurve):
+                        color = "yellow"
+                    elif isinstance(line, LTImage):
+                        color = "green"
+                    bbox = line.bbox
+                    draw.rectangle([bbox[0], self.jpg.size[1]-bbox[3], bbox[2], self.jpg.size[1]-bbox[1]], fill=None, outline=color)
+            elif style == "segments":
                 bbox = segment.bbox
                 draw.rectangle([bbox[0], self.jpg.size[1]-bbox[3], bbox[2], self.jpg.size[1]-bbox[1]], fill=None, outline="black")
                 draw.text([bbox[0], self.jpg.size[1]-bbox[1]], segment.tag, fill="red")
@@ -133,15 +134,7 @@ class Page(LTPage):
             if i == 0: continue
             self._find_top_neighbor_for_segment(segment)
 
-    def concatenate_top_neighbor(self):
-        distances = list()
-        for segment in self.segments:
-            if segment.top_neighbor is not None:
-                distance = Page.distance( (0, segment.top_center()[1]), (0, segment.top_neighbor.bottom_center()[1])  )
-                distances.append( distance )
-
-        mean = np.mean(distances)
-        std = np.std(distances)
+    def concatenate_top_neighbor(self, distances):
 
         #Concatenate segments with top neighbors
         concatenating = True
@@ -150,25 +143,29 @@ class Page(LTPage):
             for i in range(len(self.segments)):
                 segment = self.segments[i]
                 top_neighbor = segment.top_neighbor
-                slack = 0 if (top_neighbor == None or top_neighbor.font_type != segment.font_type) else 10
-                if top_neighbor is not None and (math.fabs(top_neighbor.font_size - segment.font_size) < 1.0 and top_neighbor.font_family == segment.font_family) and Page.distance( (0, segment.top_center()[1]), (0, top_neighbor.bottom_center()[1]) ) < mean + slack:
-                    for line in segment.lines:
-                        top_neighbor.addLine(line)
 
-                    self.segments.remove(segment)
-                    top_neighbor.neighbor_to.remove(segment)
+                segment_font_key = segment.key_for_font()
+                if segment_font_key in distances:
+                    mean = np.mean( distances[segment_font_key] )
+                    std = np.std( distances[segment_font_key] )
+                    if top_neighbor is not None and (math.fabs(top_neighbor.font_size - segment.font_size) < 1.0 and top_neighbor.font_family == segment.font_family) and Page.distance( (0, segment.top_center()[1]), (0, top_neighbor.bottom_center()[1]) ) < mean + std:
+                        for line in segment.lines:
+                            top_neighbor.addLine(line)
 
-                    segment_neighbor = list(segment.neighbor_to)
+                        self.segments.remove(segment)
+                        top_neighbor.neighbor_to.remove(segment)
 
-                    for neighbor in top_neighbor.neighbor_to:
-                        self._find_top_neighbor_for_segment(neighbor)
-                    for neighbor in segment_neighbor:
-                        neighbor.top_neighbor.neighbor_to.remove(neighbor)
-                        neighbor.top_neighbor = None
-                        self._find_top_neighbor_for_segment(neighbor)
+                        segment_neighbor = list(segment.neighbor_to)
 
-                    concatenating = True
-                    break
+                        for neighbor in top_neighbor.neighbor_to:
+                            self._find_top_neighbor_for_segment(neighbor)
+                        for neighbor in segment_neighbor:
+                            neighbor.top_neighbor.neighbor_to.remove(neighbor)
+                            neighbor.top_neighbor = None
+                            self._find_top_neighbor_for_segment(neighbor)
+
+                        concatenating = True
+                        break
 
         #Concatenate overlapping segments
         concatenating = True

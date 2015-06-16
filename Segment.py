@@ -50,6 +50,9 @@ class Segment:
                 return True
         return False
 
+    def key_for_font(self):
+        return self.font_family + "-" + str(self.font_size)
+
     def top_center(self):
         return (self.bbox[0] + ((self.bbox[2] - self.bbox[0]) / 2.0), self.bbox[3])
 
