@@ -61,7 +61,7 @@ class Article:
 
     def concatenate_segments(self):
         for page in self.pages:
-            page.concatenate_top_neighbor(self.stats_dict)
+            page.concatenate_segments(self.stats_dict)
 
     def save_content(self, xml_file="", style="lines"):
         if style == "lines":
@@ -72,7 +72,7 @@ class Article:
                 XML_Parser.parse_file(xml_file)
             for page in self.pages:
                 for segment in page.segments:
-                    tag = XML_Parser._find_tag_for_text(segment.text())
+                    tag = "" if xml_file == "" else XML_Parser._find_tag_for_text(segment.text())
                     segment.tag = tag
                 page.save_segments("./"+self.name+"_segments/")
 

@@ -1,4 +1,6 @@
 from pdfminer.layout import *
+import math
+import numpy as np
 
 def find_most_frequent_item(dictionary):
     count = 0
@@ -12,6 +14,23 @@ def find_most_frequent_item(dictionary):
 
 
 class Segment:
+
+    @staticmethod
+    def contains_similar_fonts(segment1, segment2):
+        for line in segment1.lines:
+            if isinstance(line, LTTextLine):
+                for element in line._objs:
+                    if isinstance(element, LTChar):
+
+                        for line2 in segment2.lines:
+                            if isinstance(line2, LTTextLine):
+                                for element2 in line2._objs:
+                                    if isinstance(element2, LTChar):
+                                        if element.fontname == element2.fontname:
+                                            return True
+        return False
+
+
 
     def __init__(self):
         self.lines = list()
@@ -71,7 +90,18 @@ class Segment:
             self._determine_bounding_box()
             self._determine_frequent_font()
 
+    def distance_between_lines(self):
+        distances = list()
+        for i in range(len(self.lines)-1):
+            distances.append( math.fabs(self.lines[i].y0 - self.lines[i+1].y1) )
+
+        if len(distances) == 0:
+            return None, None
+        else:
+            return np.mean(distances), np.std(distances)
+
     def _determine_frequent_font(self):
+        size_count = dict()
         for i, line in enumerate(self.lines):
             if isinstance(line, LTTextLine):
                 for character in line._objs:
@@ -80,11 +110,16 @@ class Segment:
                             self.font_count[character.fontname] += 1
                         else:
                             self.font_count[character.fontname] = 1
-                        self.font_size = character.size
+                        if character.size in size_count:
+                            size_count[character.size] += 1
+                        else:
+                            size_count[character.size] = 1
 
         font = find_most_frequent_item(self.font_count).split(",")
         self.font_family = font[0]
         self.font_type =  "Regular" if len(font) == 1 else font[1]
+        size = find_most_frequent_item(size_count)
+        self.font_size = 0 if size == "" else size
 
     def text(self):
         string = ""

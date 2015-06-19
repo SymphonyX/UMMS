@@ -55,12 +55,18 @@ class Page(LTPage):
                         color = "yellow"
                     elif isinstance(line, LTImage):
                         color = "green"
-                    bbox = line.bbox
+                    color = "red" if line.bbox[1] == line.bbox[3] else color
+
+                    bbox = line.bbox if line.bbox[1] != line.bbox[3] else (line.bbox[0], line.bbox[1], line.bbox[2], line.bbox[1]+2)
                     draw.rectangle([bbox[0], self.jpg.size[1]-bbox[3], bbox[2], self.jpg.size[1]-bbox[1]], fill=None, outline=color)
             elif style == "segments":
                 bbox = segment.bbox
                 draw.rectangle([bbox[0], self.jpg.size[1]-bbox[3], bbox[2], self.jpg.size[1]-bbox[1]], fill=None, outline="black")
                 draw.text([bbox[0], self.jpg.size[1]-bbox[1]], segment.tag, fill="red")
+                for line in segment.lines:
+                    if line.bbox[1] == line.bbox[3]:
+                        bbox = (line.bbox[0], line.bbox[1], line.bbox[2], line.bbox[1]+10)
+                        draw.rectangle([bbox[0], self.jpg.size[1]-bbox[3], bbox[2], self.jpg.size[1]-bbox[1]], fill=None, outline="red")
 
 
             if segment.top_neighbor is not None:
@@ -134,36 +140,71 @@ class Page(LTPage):
             if i == 0: continue
             self._find_top_neighbor_for_segment(segment)
 
-    def concatenate_top_neighbor(self, distances):
+    def _is_reference_marker(self, segment):
+        return len(segment.lines) == 1 and isinstance(segment.lines[0], LTLine)
+
+    def _similar_fonts(self, segment1, segment2):
+        return math.fabs(segment1.font_size - segment2.font_size) < 1.0 and Segment.contains_similar_fonts(segment1, segment2)
+
+    def _merge_segment_to_top(self, segment, top_neighbor):
+        for line in segment.lines:
+            top_neighbor.addLine(line)
+
+        self.segments.remove(segment)
+        top_neighbor.neighbor_to.remove(segment)
+
+        segment_neighbor = list(segment.neighbor_to)
+
+        for neighbor in top_neighbor.neighbor_to:
+            self._find_top_neighbor_for_segment(neighbor)
+        for neighbor in segment_neighbor:
+            neighbor.top_neighbor.neighbor_to.remove(neighbor)
+            neighbor.top_neighbor = None
+            self._find_top_neighbor_for_segment(neighbor)
+
+    def concatenate_segments(self, distances):
 
         #Concatenate segments with top neighbors
         concatenating = True
+        slack = 2
         while concatenating:
             concatenating = False
+            self.segments = sorted(self.segments, key=lambda seg: seg.bbox[3])
             for i in range(len(self.segments)):
                 segment = self.segments[i]
                 top_neighbor = segment.top_neighbor
-
                 segment_font_key = segment.key_for_font()
-                if segment_font_key in distances:
-                    mean = np.mean( distances[segment_font_key] )
+
+                if top_neighbor is not None and segment_font_key in distances:
+                    median = np.median( distances[segment_font_key] )
                     std = np.std( distances[segment_font_key] )
-                    if top_neighbor is not None and (math.fabs(top_neighbor.font_size - segment.font_size) < 1.0 and top_neighbor.font_family == segment.font_family) and Page.distance( (0, segment.top_center()[1]), (0, top_neighbor.bottom_center()[1]) ) < mean + std:
-                        for line in segment.lines:
-                            top_neighbor.addLine(line)
+                    distance_to_top = math.fabs(segment.top_center()[1] - top_neighbor.bottom_center()[1])
+                    mean_line_distance, std_line_distance = segment.distance_between_lines()
 
-                        self.segments.remove(segment)
-                        top_neighbor.neighbor_to.remove(segment)
+                    min_distance = median
+                    test_segment = segment
+                    test_top = top_neighbor
+                    test_distance_to_top = distance_to_top
+                    while test_top is not None and self._similar_fonts(test_segment, test_top):
+                        mean_line_distance_top, std_line_distance_top = test_top.distance_between_lines()
+                        test_distance_to_top = math.fabs(test_segment.top_center()[1] - test_top.bottom_center()[1])
 
-                        segment_neighbor = list(segment.neighbor_to)
+                        if mean_line_distance is not None and mean_line_distance < test_distance_to_top:
+                            min_distance = mean_line_distance
+                        elif test_distance_to_top < min_distance and mean_line_distance_top is None:
+                            min_distance = test_distance_to_top
+                        elif mean_line_distance_top is not None and  mean_line_distance_top < min_distance:
+                            min_distance = mean_line_distance_top
+                        test_segment = test_top
+                        test_top = test_segment.top_neighbor
 
-                        for neighbor in top_neighbor.neighbor_to:
-                            self._find_top_neighbor_for_segment(neighbor)
-                        for neighbor in segment_neighbor:
-                            neighbor.top_neighbor.neighbor_to.remove(neighbor)
-                            neighbor.top_neighbor = None
-                            self._find_top_neighbor_for_segment(neighbor)
 
+                    if self._is_reference_marker(top_neighbor) and distance_to_top < min_distance + slack:
+                        self._merge_segment_to_top(segment, top_neighbor)
+                        concatenating = True
+                        break
+                    elif self._similar_fonts(top_neighbor, segment) and distance_to_top < min_distance + slack:
+                        self._merge_segment_to_top(segment, top_neighbor)
                         concatenating = True
                         break
 
@@ -174,7 +215,7 @@ class Page(LTPage):
             for i in range(len(self.segments)):
                 segment = self.segments[i]
                 for test_segment in self.segments:
-                    if test_segment is not segment and Page.intersecting_segments(segment, test_segment):
+                    if test_segment is not segment and Page.intersecting_segments(segment, test_segment) and (self._is_reference_marker(test_segment) or self._similar_fonts(segment, test_segment)):
                         for line in test_segment.lines:
                             segment.addLine(line)
 
