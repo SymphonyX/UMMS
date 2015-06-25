@@ -1,0 +1,249 @@
+Section Title: 
+
+ year1991t + . . . + β37 GDP per capitait
+year2008t) where 1990 is the reference category, the country-speciﬁc intercepts (ui), and the
+disturbance term unique to each country at each point in time (eit). As a reminder, all non-di-
+chotomous variables are transformed with the base 10 logarithm (log). The coefﬁcient for GDP
+per capita is the unit change in the dependent variable for each unit increase in GDP per capita
+and captures the effect for the base year, 1990. The overall effect of GDP per capita for the
+other time points (i.e., 1 991, 1992, . . . 2007, 2008) equals the sum of the coefﬁcient for GDP
+per capita and the appropriate interaction term if the latter is statistically signiﬁcant [35]. This
+approach allows the effect of log GDP per capita to vary across years.
+The use of interactions between GDP per capita and time dummy variables is the same
+modeling approach employed in Jorgenson’s [7] longitudinal study of production-based
+CIWB. However, in this study of consumption-based CIWB, we have annual observations
+from 1990 to 2008 (due to data availability as described above) and thus interactions between
+annual time dummy variables and GDP per capita, while Jorgenson’s [7] study includes obser-
+vations and interaction variables in five year increments, but for a much wider time period (i.e.,
+1970 to 2009).
+β6year1965t + . . . + β14year2005t), the interactions between GDP per capita and the dummy
+variables for each year (β20 GDP per capitait
+Results and Discussion
+Table 2 reports the full findings for the estimated model for each of the six samples of nations.
+The close to perfect R-square statistics are largely due to the unreported country-specific and
+year-specific intercepts (the two-way fixed effects). The two-way fixed effects help account for
+omitted variable bias, which would be of greater concern if the fixed effects were excluded since
+the estimated models do not include non-dichotomous predictors other than GDP per capita
+that are known to impact both carbon emissions and average life expectancy. Table 3 provides
+the elasticity coefficients for the estimated effects of GDP per capita for each year, which are
+based on the tests of statistical significance reported in Table 2 for the interactions between
+time and GDP per capita. Thorough sensitivity analyses indicate that none of the six samples
+include any overly influential cases.
+For the sample of all 69 nations, the effect of GDP per capita on CIWB was positive and sta-
+tistically significant in the year 1990, where a one percent increase in GDP per capita led to a.
+045 percent increase in CIWB. All interactions between GDP per capita and the year dummy
+variables are positive and statistically significant for the overall sample, and in the year 2008, a
+one percent increase in GDP per capita led to a. 066 percent increase in CIWB. The increasing
+effect of development was less pronounced in the earlier years of the study, and became moder-
+ately more pronounced from roughly 2002 until the final year in the analysis, 2008.
+Turning to the sample restricted to the 25 OECD nations, a one percent increase in GDP
+per capita in 1990 led to a. 137 percent increase in CIWB. While the majority of interactions
+between GDP per capita and the yearly dummy variables are positive and statistically signifi-
+cant, the effect of level of development appeared to peak in the years 1998, 2004, and 2005,
+where in each of these years a one per cent increase in GDP per capita led to a. 153 percent in-
+crease in consumption-based CIWB. In the year 2008, the elasticity coefficient for the effect of
+GDP per capita was. 144, which is modestly larger than the elasticity coefficient for GDP per
+capita in the year 1990. Overall, the effect of GDP per capita on CIWB for the OECD nations
+initially increased in the 1990s, followed by minor decreases through the year 2000, which were
+followed by minor increases through 2004 and 2005, and then minor decreases through 2008.
+For the “combined” sample of 44 Non-OECD nations, the effect of GDP per capita on
+CIWB in 1990 was not statistically significant. Thus, we interpret the estimated effect of level
+of development for this initial year in the analysis as being zero. All interactions between GDP
+per capita and year are positive and significant. The elasticity coefficients for the effect of GDP
+per capita increased from zero in 1990 to. 001 in 1991 and. 003 in 1992, and then began to in-
+crease more notably each year through 2008, where a one percent increase in GDP per capita
+led to a. 064 percent increase in CIWB.
+Fig 1 graphs the annual elasticity coefficients for the sample of all 69 nations as well as the
+samples restricted to the 25 OECD nations and the 44 Non-OECD nations. The analyses of
+each of these three samples suggest unsustainable relationships between consumption-based
+CIWB and economic development, and the analysis of the overall sample hides notable differ-
+ences in the dynamic relationships between CIWB and development for the mostly high in-
+come OECD nations relative to the Non-OECD nations. While the elasticity coefficients for
+the effect of GDP per capita on CIWB increased much more substantially from 1990 to 2008
+for the Non-OECD nations than for the OECD nations, the coefficient of. 064 in 2008 for
+Non-OECD nations is notably smaller than the coefficient of. 144 for the sample of OECD na-
+tions. In other words, while development appears to have become increasingly unsustainable in
+Non-OECD nations, economic development continues to be much more unsustainable for the
+OECD nations, at least in the context of consumption-based CIWB. We now review the results
+of the analyses of the three samples of regionally-defined Non-OECD nations.
+As noted in Table 2, for the sample of 16 Non-OECD Africa nations, in the year 1990 a one
+percent increase in GDP per capita led to a. 078 percent decrease in CIWB. All of the interac-
+tions between GDP per capita and the year dummy variables are positive and statistically sig-
+nificant, which suggests that development became increasingly less sustainable for these
+nations. Table 3 shows that while the elasticity coefficient for GDP per capita was still slightly
+negative in the year 2004 (coefficient of-.001), in the year 2005 the coefficient became positive,
+and suggesting that a one percent increase in GDP per capita led to a. 004 percent increase in
+consumption-based CIWB. The positive coefficient continued to increase, and by the year
+2008 it reached a value of. 021.
+Turning to the sample of 15 Non-OECD Asia nations, for the year 1990 the effect of GDP
+per capita on CIWB was non-significant and thus zero. All interactions between GDP per cap-
+ita and year are positive and statistically significant, and with a few exceptions increase in value
+successively, which suggests an increasingly unsustainable relationship between consumption-
+based CIWB and development. By the year 2008, the elasticity coefficient for the effect of GDP
+per capita was. 076.
+The results of the analysis of the 13 Non-OECD Latin America nations are generally consis-
+tent with the findings for the Non-OECD Asia countries. The estimated effect of GDP per cap-
+ita in 1990 on CIWB for these nations was not significantly different than zero. All interactions
+between GDP per capita and the year dummy variables are positive and statistically significant.
+In 2008, a one percent increase in GDP per capita led to a. 044 percent increase in consump-
+tion-based CIWB.
+Fig 2 graphs the annual elasticity coefficients for each of the three regionally-defined sam-
+ples of Non-OECD nations as well as the sample of 25 OECD nations for comparison purposes.
+The plotted lines in Fig 2 underscore that the increasingly unsustainable relationship between
+consumption-based CIWB and development for the overall sample of Non-OECD nations is
+largely a function of the trajectories for the Non-OECD nations in Asia and Latin America,
+and to a much lesser extent the Non-OECD nations in Africa. While the latter group of nations
+experienced noteworthy changes in the CIWB and development relationship through time, the
+positive elasticity coefficient in 2008 for the effect of GDP for the Non-OECD Africa nations
+(.021) was less than half as large as the elasticity coefficient for the sample of Non-OECD Latin
+America nations (.044) and less than 1/3 the size of the elasticity coefficient for the sample of
+Non-OECD Asia nations (.076). As important, the elasticity coefficient for the effect of GDP
+per capita in the year 2008 for the sample of mostly high income OECD nations (.144) is al-
+most twice as large as the elasticity coefficient for the sample of Non-OECD Asia nations.
+To check the sensitivity of our results to the specific approach we used to measure consump-
+tion-based CIWB, we repeated our analyses using an alternative measure—the residual from
+regressing life expectancy on the per capita carbon emissions measures. We used the residuals
+from this regression as an alternative dependent variable to the CIWB ratio measure. Positive
+residuals indicate higher well-being relative to levels of emissions, while negative residuals indi-
+cate lower well-being relative to levels of emissions. This residual approach, which was initially
+used by urban political economy scholars [37–38], is used as the primary dependent variable in
+other studies on similar sustainability topics [3], and treated as a sensitivity analysis in past
+research on production-based CIWB [7]. These residuals, as expected, are close to perfectly
+negatively correlated with the CIWB ratio measures. The results of the sensitivity analyses are
+substantively identical to the reported analyses of the consumption-based CIWB ratio measure,
+providing added confidence in their validity.
+Conclusion
+This research advances sustainability scholarship on the environmental impacts of human
+well-being, and the extent to which socio-economic conditions influence them [4, 7–8, 13–14,
+39]. The findings highlight notable differences in the changing effect of economic development
+on the consumption-based carbon intensity of well-being across OECD and Non-OECD na-
+tions as well as notable differences among Non-OECD nations in different regions. The elastic-
+ity coefficients for the effect of GDP per capita on consumption-based CIWB in mostly high-
+income OECD nations, which remain relatively stable in value through time, are much larger
+in each year than for the Non-OECD nations. Further, there are important differences across
+the samples of Non-OECD nations in Asia, Latin America, and Africa, but all of these regions,
+which consist of less-developed and developing nations, experienced patterns of increasingly
+unsustainable relationships between CIWB and economic development during the 1990 to
+2008 period of study. Thus, even with these differences in mind, this research suggests that eco-
+nomic development by itself is not a pathway to sustainability—at least in the context of reduc-
+ing consumption-based CIWB.
+The use of consumption-based carbon emissions in this study leads to differences between
+OECD and non-OECD nations that appear to be much more pronounced than when employ-
+ing production-based, territorial measures of carbon emissions [7, 13]. In other words, studies
+of CIWB and other related outcomes that use measures of production-based carbon emissions
+might yield results that underestimate the differences between relatively higher-income and
+lower-income nations. As this study shows, for the sample of mostly high-income OECD na-
+tions, the effect of economic development on consumption-based CIWB is relatively time-in-
+variant and much larger than the increasing effect of development for lower-income non-
+OECD nations throughout the world. Besides advancing sustainability science, the empirical
+identification of these Global North / Global South differences and the recognition that con-
+sumption-based measures more effectively capture societal contributions to overall anthropo-
+genic greenhouse gas emissions [16, 20, 22, 24] could help in resolving the ongoing challenges
+concerning the formation and widespread acceptance of equitable climate change mitigation
+and adaptation international agreements [23, 40–43].
+The findings for this study point to multiple avenues for future research. First, future re-
+search would do well to consider how other factors might shape the consumption-based CIWB
+of nations, including the presence of environmental INGOs and other sustainability-oriented
+civil society configurations, the regulatory mechanisms of nations and other political bodies,
+and the structural and spatial characteristics of populations within nations, such as urban and
+rural population distributions and levels of domestic income inequality. Second, as consump-
+tion-based carbon emissions data for an adequate number of nations become available for
+years more current than 2008, researchers should examine if the effect of development on
+CIWB was impacted by the recent world economic recession. Third, future research should
+employ qualitative comparative analysis (QCA), a technique that uses Boolean algebra and is
+capable of handling higher-order complex interactions between variables, to identify combina-
+tions of factors and conditions that might lead to lower levels of growth or actual reductions in
+CIWB (for applied examples of QCA, see [32, 44]). Analyses along these lines would help an-
+swer the call for solutions-oriented sustainability research, something that other scholars
+working in this particular area of scholarship have highlighted as well [11]. Lastly, with the in-
+creasing availability of comparative data at smaller scales, such as the city level [45], US state
+and county levels [46], and the province level in different nations [47], future research should
+conduct studies at such lower levels of analysis to assess the potential similarities and differ-
+ences in observed relationships between environmental conditions, human well-being, and
+socio-economic factors at national and sub-national levels, and how the interrelationships may
+change through time.
+Supporting Information
+S1 Dataset. The Data Analyzed in the Study.
+(PDF)
+Acknowledgments
+The authors thank the anonymous reviewers for helpful suggestions on a prior draft.
+Author Contributions
+Analyzed the data: AKJ. Wrote the paper: AKJ JG.
+References
+10.
+11. Dietz T, Jorgenson AK (2014) Towards a new view of sustainable development: human well-being and
+environmental stress. Environmental Research Letters 9:031001.
+12. Mazur A, Rosa E (1974) Energy and life-style: massive energy consumption may not be necessary to
+maintain current living standards in America. Science 186:607–610. PMID: 17833706
+13. Knight K (2014) Temporal variation in the relationship between environmental demands and well-
+being: a panel analysis of developed and less-developed countries. Population and Environment
+36:32–47.
+14.
+15.
+16. Knight K, Schor J (2014) Economic growth and climate change: a cross-national analysis of territorial
+and consumption-based carbon emissions in high-income countries. Sustainability 6:3722–3731.
+17. York R (2012) Asymmetric effects of economic growth and decline on CO2 emissions. Nature Climate
+Change 2:762–764.
+18. Brady D, Kaya Y, Beckfield J (2007) Reassessing the effect of economic growth on well-being in less-
+developed countries, 1980–2003. Studies in Comparative International Development 42:1–35.
+19. Rosa E, Diekmann A, Dietz T, Jaeger C (2010) Human footprints on the global environment: threats to
+sustainability. Cambridge: MIT Press.
+20. Hertwich E, Peters G (2009) Carbon footprint of nations: a global, trade-linked analysis. Environmental
+Science & Technology 43:6414–6420. PMID: 12194880
+21. Kanemoto K, Moran D, Lenzen M, Geschke A (2014) International trade undermines national emission
+reduction targets: new evidence from air pollution. Global Environmental Change 24:52–59.
+22. Minx J, Baiocchi G, Wiedmann T, Barrett J, Creutzig F, Kuishuang F, et al. (2013) Carbon footprints of
+cities and other human settlements in the UK. Environmental Research Letters 8 035039.
+23. Peters G, Hertwich E (2008) CO2 embodied in international trade with implications for global climate
+policy. Environmental Science & Technology 42:1401–1407. PMID: 12194880
+24. Peters G, Minx J, Weber C, Edenhofer O (2011) Growth in emissions transfers via international trade
+from 1990 to 2008. Proceedings of the National Academy of Sciences USA 108:8903–8908. doi: 10.
+1073/pnas.1006388108 PMID: 21518879
+25. Pamuk E, Fuchs R, Lutz W (2011) Comparing relative effects of education and economic resources on
+infant mortality in developing countries. Population and Development Review 37:637–664. PMID:
+22319768
+26. Mahutga M, Smith D (2011) Globalization, the structure of the world economy and economic develop-
+ment. Social Science Research: 40:257–272.
+27. Cole M (2004) US environmental load displacement: examining consumption, regulations and the role
+of NAFTA. Ecological Economics 48:439–450.
+28. Hornborg A (2009) Zero-sum world: challenges in conceptualizing environmental load displacement
+and ecologically unequal exchange in the world-system. International Journal of Comparative Sociolo-
+gy 50:237–262.
+29. Muradian R, O’Connor M, Martinez-Alier J (2002) Embodied pollution in trade: estimating the ‘environ-
+mental load displacement’ of industrialized countries. Ecological Economics 41:51–67.
+30.
+31. Marcotullio P, Sarzynski A, Albrecht J, Schulz N (2012) The geography of urban greenhouse gas emis-
+sions in Asia: a regional analysis. Global Environmental Change 22:944–958.
+32. Rudel T (2005) Tropical forests: regional paths of destruction and regeneration in the late twentieth cen-
+tury. New York City: Columbia University Press.
+33.
+34. Victor D, Gerlagh R, Baiocchi G (2014) Getting serious about categorizing countries. Science 345
+(6192):34–36.
+35. Allison P (2009) Fixed effects regression models. Thousand Oaks: Sage.
+36. Beck N, Katz J (1995) What to do (and not do) with time-series cross-section data. American Political
+Science Review 89:634–647.
+37. Shandra J, London B, Williamson J (2003) Environmental degradation, environmental sustainability,
+and overurbanization in the developing world: a quantitative, cross-national analysis. Sociological Per-
+spectives 46:309–329.
+38.
+39.
+40. Ciplet D, Roberts JT, Khan M (2013) The politics of international climate adaptation funding: justice and
+divisions in the greenhouse. Global Environmental Politics 13:49–68.
+41. Grasso M, Roberts JT (2014) A compromise to break the climate impasse. Nature Climate Change
+4:543–549.
+ness of consumption-based versus production-based approaches in the case of unilateral climate po-
+42. Roberts JT, Parks B (2007) A climate of injustice: global inequality, north-south politics, and climate pol-
+icy. Cambridge: MIT Press.
+43. Steininger K, Lininger C, Droege S, Roser D, Tomlinson L, Meyer L (2014) Justice and cost effective-
+lices. Global Environmental Change 24:75–87.
+44. Grant D, Trautner M, Downey L, Thiebaud L (2010) Bringing the polluters back in: environmental in-
+equality and the organization of chemical production. American Sociological Review 75:479–504.
+PMID: 21921966
+45. Sarzynski A (2012) Bigger is not always better: a comparative analysis of cities and their air pollution
+impact. Urban Studies 49:3121–3138.
+46. Elliott J, Clement M (2014) Urbanization and carbon emissions: a nationwide study of local countervail-
+ing effects in the United States. Social Science Quarterly 95:795–816.
+47. Shen Y, Shi X, Zhang D (2014) Economic growth, regional disparities and energy demand in China. En-
+ergy Policy 71:31–39.
+
+*********************************************************

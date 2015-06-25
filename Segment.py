@@ -63,6 +63,13 @@ class Segment:
 
         self.bbox = (x0, y0, x1, y1)
 
+
+    def contains_text(self):
+        for line in self.lines:
+            if isinstance(line, LTTextLine):
+                return True
+        return False
+
     def contains_figure(self):
         for line in self.lines:
             if isinstance(line, LTTextLine) == False:
@@ -115,9 +122,11 @@ class Segment:
                         else:
                             size_count[character.size] = 1
 
-        font = find_most_frequent_item(self.font_count).split(",")
-        self.font_family = font[0]
-        self.font_type =  "Regular" if len(font) == 1 else font[1]
+        font = find_most_frequent_item(self.font_count)
+        self.font = font
+        split_font = self.font.split(",")
+        self.font_family = split_font[0]
+        self.font_type =  "Regular" if len(split_font) == 1 else split_font[1]
         size = find_most_frequent_item(size_count)
         self.font_size = 0 if size == "" else size
 
