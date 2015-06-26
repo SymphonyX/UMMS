@@ -98,7 +98,7 @@ if __name__ == "__main__":
     pdfArticle.find_content_distances()
     pdfArticle.save_content(style="lines")
     pdfArticle.concatenate_segments()
-    pdfArticle.identify_columns()
+    pdfArticle.identify_num_columns()
     pdfArticle.identify_sections()
     pdfArticle.save_content(xml_file=xml_file, style="segments")
     pdfArticle.extract_text()

@@ -215,7 +215,7 @@ class Page(LTPage):
             for i in range(len(self.segments)):
                 segment = self.segments[i]
                 for test_segment in self.segments:
-                    if test_segment is not segment and Page.intersecting_segments(segment, test_segment) and (self._is_reference_marker(test_segment) or self._similar_fonts(segment, test_segment)):
+                    if test_segment is not segment and Page.intersecting_segments(segment, test_segment):# and (self._is_reference_marker(test_segment) or self._similar_fonts(segment, test_segment)):
                         for line in test_segment.lines:
                             segment.addLine(line)
 

@@ -53,13 +53,13 @@ class Segment:
         y1 = float("-inf")
         for line in self.lines:
             if line.bbox[0] < x0:
-                x0 = line.bbox[0]
+                x0 = round(line.bbox[0],2)
             if line.bbox[1] < y0:
-                y0 = line.bbox[1]
+                y0 = round(line.bbox[1],2)
             if line.bbox[2] > x1:
-                x1 = line.bbox[2]
+                x1 = round(line.bbox[2],2)
             if line.bbox[3] > y1:
-                y1 = line.bbox[3]
+                y1 = round(line.bbox[3],2)
 
         self.bbox = (x0, y0, x1, y1)
 

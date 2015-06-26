@@ -25,7 +25,9 @@ class Article:
         self.title = "-"
         self.authors = "-"
         self.sections = list()
+        self.num_columns = 0
         self.column_dim = list()
+        self.flow_bbox = ( float("inf"), float("inf"), float("-inf"), float("-inf") )
 
     def find_default_fonts(self):
         page_font_count = dict()
@@ -91,47 +93,92 @@ class Article:
                 page.save_segments("./"+self.name+"_segments/")
 
 
+    def _is_within_flow_bounds(self, segment):
+        return segment.bbox[0] >= self.flow_bbox[0]-10.0 and segment.bbox[1] >= self.flow_bbox[1]-10.0 and segment.bbox[2] <= self.flow_bbox[2]+10.0 and segment.bbox[3] <= self.flow_bbox[3]+10.0
+
     def identify_sections(self):
 
         current_section = list()
         segments_used = list()
         for page in reversed(self.pages):
-            segments_bottom = sorted(page.segments, key=lambda seg: (seg.bbox[1], -seg.bbox[0]) )
-            for segment in segments_bottom:
-                for dim in self.column_dim:
-                    if segment.font_size > self.default_size:
-                        current_section = list(reversed(current_section))
-                        section = Section(segment.text(), current_section)
-                        if len(current_section) > 0:
-                            self.sections.append(section)
-                        current_section = list()
+            sorted_segments = sorted(page.segments, key=lambda seg: -seg.bbox[2] )
+            sorted_segments = sorted(sorted_segments, key=lambda seg: seg.bbox[1] )
+            self.column_dim = sorted(self.column_dim, key=lambda x: x[0], reverse=True)
+            for column in self.column_dim:
+                for segment in sorted_segments:
+                    if self._is_within_flow_bounds(segment) and segment.bbox[0] >= column[0]-10.0 and segment.bbox[2] <= column[1]+10.0:
 
-                    elif math.fabs(segment.bbox[0] - dim[0]) < 1.0 and segment not in segments_used:
-                        segments_used.append(segment)
-
-                        current_section.append(segment)
+                        if segment.font_size > self.default_size:
+                            current_section = list(reversed(current_section))
+                            section = Section(segment.text(), current_section)
+                            if len(current_section) > 0:
+                                self.sections.append(section)
+                            current_section = list()
+                        else:
+                            segments_used.append(segment)
+                            current_section.append(segment)
 
         self.sections = list(reversed(self.sections))
 
 
-    def identify_columns(self):
+    def identify_num_columns(self):
+        column_count = dict()
+        self.column_dim = list()
+        column_dim_list = list()
         for page in self.pages:
+            column_dim = list()
             for segment in page.segments:
                 if segment.font_family == self.default_font_family and math.fabs(segment.font_size - self.default_size) < 0.1:
-                    column_dim_copy = list(self.column_dim)
+                    column_dim_copy = list(column_dim)
                     updated_dim = False
 
                     for dim in column_dim_copy:
-                        if math.fabs(segment.bbox[0] - dim[0]) < 1.0:
-                            self.column_dim.remove(dim)
+                        if math.fabs(segment.bbox[0] - dim[0]) < 10.0:
+                            column_dim.remove(dim)
                             minx = segment.bbox[0] if segment.bbox[0] < dim[0] else dim[0]
                             maxx = segment.bbox[2] if segment.bbox[2] > dim[1] else dim[1]
-                            self.column_dim.append( (minx, maxx) )
+                            column_dim.append( (minx, maxx) )
                             updated_dim = True
                             break
 
                     if updated_dim == False:
-                        self.column_dim.append( (segment.bbox[0], segment.bbox[2]) )
+                        column_dim.append( (segment.bbox[0], segment.bbox[2]) )
+
+
+                    minx_flow = self.flow_bbox[0] if self.flow_bbox[0] < segment.bbox[0] else segment.bbox[0]
+                    miny_flow = self.flow_bbox[1] if self.flow_bbox[1] < segment.bbox[1] else segment.bbox[1]
+                    maxx_flow = self.flow_bbox[2] if self.flow_bbox[2] > segment.bbox[2] else segment.bbox[2]
+                    maxy_flow = self.flow_bbox[3] if self.flow_bbox[3] > segment.bbox[3] else segment.bbox[3]
+
+                    self.flow_bbox = (minx_flow, miny_flow, maxx_flow, maxy_flow)
+
+            column_dim_list.append( column_dim )
+
+            if len(column_dim) in column_count:
+                column_count[ len(column_dim) ] += 1
+            else:
+                column_count[ len(column_dim) ] = 1
+
+        self.num_columns = find_most_frequent_item(column_count)
+
+        for column_dim in column_dim_list:
+            for dim in column_dim:
+                updated = False
+                for column_index in range(self.num_columns):
+
+                    if dim[0] >= self.flow_bbox[0] + ((self.flow_bbox[2] - self.flow_bbox[0]) / self.num_columns) * column_index and \
+                        dim[1] <= self.flow_bbox[0] + ((self.flow_bbox[2] - self.flow_bbox[0]) / self.num_columns) * (column_index+1):
+                        for i in range(len(self.column_dim)):
+                            test_dim = self.column_dim[i]
+                            if math.fabs(test_dim[0] - dim[0]) < 10.0 and math.fabs(test_dim[1] - dim[1]) < 10.0:
+                                minx = test_dim[0] if test_dim[0] < dim[0] else dim[0]
+                                maxx = test_dim[1] if test_dim[1] > dim[1] else dim[1]
+                                self.column_dim[i] = (minx, maxx)
+                                updated = True
+                                break
+
+                        if updated == False:
+                            self.column_dim.append( (dim[0], dim[1]) )
 
 
     def plot_stats(self):
