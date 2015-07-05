@@ -95,22 +95,30 @@ class Page(LTPage):
         img = self._jpg_with_bbox()
         img.show()
 
-    def _parse_text(self):
-        for element in self.page._objs:
+    def _parse_text(self, obj=None):
+        if obj is None:
+            obj = self.page
+        for element in obj._objs:
             if isinstance(element, LTTextBox):
                 for line in element._objs:
                     segment = Segment()
+                    segment.page = self.page_num
                     segment.addLine(line)
                     self.segments.append(segment)
             elif isinstance(element, LTRect) or isinstance(element, LTCurve) or isinstance(element, LTImage):
                 segment = Segment()
+                segment.page = self.page_num
                 segment.addLine(element)
                 self.segments.append(segment)
             elif isinstance(element, LTFigure):
                 for line in element._objs:
-                    segment = Segment()
-                    segment.addLine(line)
-                    self.segments.append(segment)
+                    if isinstance(line, LTFigure):
+                        self._parse_text(line)
+                    else:
+                        segment = Segment()
+                        segment.page = self.page_num
+                        segment.addLine(line)
+                        self.segments.append(segment)
 
     def _find_top_neighbor_for_segment(self, segment):
         bottoms = sorted(self.segments, key=lambda seg: seg.bbox[1], reverse=True)

@@ -4,7 +4,7 @@ import numpy as np
 
 OTHER_TAG = "other"
 TITLE_TAG = "article-title"
-CONTRIBUTOR_TAG ="contrib"
+CONTRIBUTOR_TAG ="contrib-group"
 AUTHOR_TAG = "authors"
 AFFILIATION_TAG = "aff"
 ABSTRACT_TAG = "abstract"
@@ -17,7 +17,6 @@ STAGE_FRONT = "front"
 STAGE_BODY = "body"
 STAGE_BACK = "back"
 
-TAGS_OF_INTEREST = [TITLE_TAG, CONTRIBUTOR_TAG, AUTHOR_TAG, AFFILIATION_TAG, ABSTRACT_TAG, SECTION_TAG]
 
 parsed_xml = dict()
 bag_of_words = dict()
@@ -30,10 +29,6 @@ class Feature:
 
 class XML_Parser:
 
-    processing_tag_for_tag = { CONTRIBUTOR_TAG: "name",
-                               AFFILIATION_TAG: "addr-line",
-                               SECTION_TAG: "title" }
-    STAGE = ""
     VECTORIZER = None
 
     @staticmethod
@@ -47,123 +42,117 @@ class XML_Parser:
         XML_Parser.VECTORIZER = CountVectorizer(min_df=1)
         XML_Parser.VECTORIZER.fit_transform(corpus)
         analyzer = XML_Parser.VECTORIZER.build_analyzer()
-        authors = ""
         for k, v in parsed_xml.items():
-            if len(analyzer(k)) > 0 and v is not CONTRIBUTOR_TAG:
+            if len(analyzer(k)) > 0:
                 feat = XML_Parser.VECTORIZER.transform([k]).toarray()
                 feature = Feature(feat, k)
                 bag_of_words[feature] = v
-            elif v == CONTRIBUTOR_TAG:
-                authors += v + " "
-
-        feat = XML_Parser.VECTORIZER.transform( [ authors ] ).toarray()
-        feature = Feature(feat, authors)
-        bag_of_words[feature] = CONTRIBUTOR_TAG
-
-    @staticmethod
-    def _recognized_element(element):
-        if element.tag == ABSTRACT_TAG:
-            return True
-        elif element.tag == TITLE_TAG and XML_Parser.STAGE == STAGE_FRONT:
-            return  True
-        elif element.tag == CONTRIBUTOR_TAG:
-            return True
-        elif element.tag == AFFILIATION_TAG:
-            return True
-        elif element.tag == SECTION_TAG and XML_Parser.STAGE == STAGE_BODY:
-            return True
-        return False
 
     @staticmethod
     def _process_element(element):
         for child in element._children:
-            if child.tag == STAGE_FRONT and XML_Parser.STAGE == "":
-                XML_Parser.STAGE = STAGE_FRONT
-            elif child.tag == STAGE_BODY and XML_Parser.STAGE == STAGE_FRONT:
-                XML_Parser.STAGE = STAGE_BODY
-            elif child == STAGE_BACK and XML_Parser.STAGE == STAGE_BODY:
-                XML_Parser.STAGE = STAGE_BACK
 
-            element_found = False
-            if XML_Parser._recognized_element(child) == True:
+            if child.tag == STAGE_FRONT:
+                XML_Parser._process_front_elements(child)
+            elif child.tag == STAGE_BODY:
+                XML_Parser._process_body_elements(child)
+            elif child.tag == STAGE_BACK:
+                XML_Parser._process_back_elements(child)
 
-                if child.tag == SECTION_TAG:
-                    XML_Parser._process_section(child)
-                else:
-                    XML_Parser._parse_section_under_tag(child.tag, child)
-                element_found = True
+    @staticmethod
+    def _process_back_elements(element):
+        for child in element._children:
+            if child.tag == "ack":
+                acknowledgement = ""
+                for c in child._children:
+                    if c.tag == "p":
+                        acknowledgement += c.text + " "
+                parsed_xml[acknowledgement] = "acknowledgement"
+            elif child.tag == "ref-list":
+                for c in child._children:
+                    if c.tag == "title":
+                        parsed_xml[c.text] = "reference-title"
 
-            else:
-                text = ""
-                for e in child._children:
-                    if e.text is not None and e.tag not in TAGS_OF_INTEREST:
-                        text += e.text + " "
-                parsed_xml[text] = OTHER_TAG
+    @staticmethod
+    def _process_front_elements(element):
+        for child in element._children:
+            XML_Parser._process_front_elements(child)
+
+        if element.tag == TITLE_TAG:
+            parsed_xml[element.text] = TITLE_TAG
+        elif element.tag == ABSTRACT_TAG:
+            abstract = ""
+            for child in element._children:
+                if child.tag == "p":
+                    abstract += child.text + " "
+            parsed_xml[abstract] = ABSTRACT_TAG
+        elif element.tag == CONTRIBUTOR_TAG:
+            authors = ""
+            for child in element._children:
+                if child.tag == "contrib" and child.attrib["contrib-type"] == "author":
+                    name_element = child._children[0]
+                    for c in name_element._children:
+                        authors += c.text + " "
+                    authors += ", "
+
+            if authors != "":
+                parsed_xml[authors] = "authors"
+        elif element.tag == "article-meta":
+            affiliations = ""
+            for child in element._children:
+                if child.tag == "aff" and child.attrib["id"].startswith("edit") == False:
+                    for c in child._children:
+                        if c.tag == "addr-line":
+                            affiliations += c.text + " "
+
+            if affiliations != "":
+                parsed_xml[affiliations] = AFFILIATION_TAG
 
 
-            if element_found == False:
-                XML_Parser._process_element(child)
+    @staticmethod
+    def _process_body_elements(element):
+        for child in element._children:
+            if child.tag == SECTION_TAG:
+                XML_Parser._process_section(child)
+
 
     @staticmethod
     def _process_section(element):
-        XML_Parser._parse_section_under_tag(element.tag, element)
-        ######### For parsing section body only ###############
-        body_text = ""
-        for e in element._children:
-            if e.tag == "p" and e.text is not None:
-                body_text += e.text + " "
-                parsed_xml[body_text] = SECTION_BODY_TAG
-            elif e.tag == SECTION_TAG:
-                XML_Parser._process_section(e)
-            elif e.tag == FIGURE_TAG:
-                caption_title, caption_body = XML_Parser._process_caption(e)
-                if caption_body != "":
-                    parsed_xml[caption_body] = "caption-body"
-                if caption_title != "":
-                    parsed_xml[caption_title] = "caption-title"
-
-    @staticmethod
-    def _process_caption(element):
-        caption_title = ""
-        caption_body = ""
+        content = ""
         for child in element._children:
-            if child.tag == "caption":
-                for e in child._children:
-                    if e.tag == "title" and (e.text is not None and e.text != "\n"):
-                        caption_title += e.text + " "
-                    elif e.tag == "p" and (e.text is not None and e.text != "\n"):
-                        caption_body += e.text + " "
-        return caption_title, caption_body
+            if child.tag == "title":
+                parsed_xml[child.text] = "section-title"
+            elif child.tag == "p":
+                if child.text is not None:
+                    content += child.text + " "
+                for c in child._children:
+                    if c.tag == "xref":
+                        content += c.tail + " "
+                    elif c.tag == "italic":
+                        content += c.text + " "
+            elif child.tag == SECTION_TAG:
+                XML_Parser._process_section(child)
+
+        if content != "":
+            parsed_xml[content] = "section-body"
 
 
     @staticmethod
-    def _parse_section_under_tag(tag, element):
-        processing_element =  XML_Parser._get_processing_element(element)
-        text = "" if processing_element.text == "\n" else processing_element.text
-        for child in processing_element._children:
-            text += child.text + " "
+    def generate_candidate_matrix(text_list):
+        matrix = np.zeros( (len(text_list), len(bag_of_words.items())) ) #(text, tags)
 
-        parsed_xml[text] = tag
-
-
-    @staticmethod
-    def _get_processing_element(element):
-        e = element
-        if element.tag == CONTRIBUTOR_TAG or element.tag == AFFILIATION_TAG or element.tag == SECTION_TAG:
-            for child in element._children:
-                if child.tag == XML_Parser.processing_tag_for_tag[element.tag]:
-                    e = child
-        return e
-
-    @staticmethod
-    def _find_tag_for_text(text):
-        feature_vec = XML_Parser.VECTORIZER.transform( [text] ).toarray()
-        distance = np.infty
-        text_tag = ""
+        tags = list()
         for feature, tag in bag_of_words.items():
-            vec_distance = np.linalg.norm(feature.feat-feature_vec)
-            if vec_distance < distance:
-                distance = vec_distance
-                text_tag = tag
-        return text_tag
+            tags.append( (feature, tag) )
 
+        for i, text in enumerate(text_list):
+            feature_vec = XML_Parser.VECTORIZER.transform( [text] ).toarray()
+            index = 0
+            for tup in tags:
+                feature = tup[0]
+                tag = tup[1]
+                distance = np.linalg.norm(feature.feat-feature_vec)
+                matrix[i][index] = distance
+                index += 1
+
+        return text_list, tags, matrix

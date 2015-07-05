@@ -79,6 +79,10 @@ if __name__ == "__main__":
         check_call(["rm", "-R", pdf_name+"_segments"])
     check_call(["mkdir", pdf_name+"_segments"])
 
+    image_folder = pdf_name+"_images"
+    if isdir(image_folder):
+        check_call(["rm", "-R", image_folder])
+    check_call(["mkdir", image_folder])
 
     pages = list()
     page_count = 0
@@ -100,6 +104,7 @@ if __name__ == "__main__":
     pdfArticle.concatenate_segments()
     pdfArticle.identify_num_columns()
     pdfArticle.identify_sections()
+    pdfArticle.save_images(image_folder)
     pdfArticle.save_content(xml_file=xml_file, style="segments")
     pdfArticle.extract_text()
     pdfArticle.plot_stats()

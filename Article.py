@@ -5,14 +5,21 @@ from SegmentedPage import Page
 import numpy as np
 from xmlParser import XML_Parser
 import math
-
+import os
 import matplotlib.pyplot as plt
+from binascii import b2a_hex
 
 class Section:
 
     def __init__(self, title, segments):
         self.title = title
         self.segments = segments
+
+    def text(self):
+        txt = ""
+        for segment in self.segments:
+            txt += segment.text() + " "
+        return txt
 
 class Article:
 
@@ -53,6 +60,51 @@ class Article:
         self.default_size = find_most_frequent_item(size_count)
 
 
+    def _write_file (self, folder, filename, filedata, flags='w'):
+        """Write the file data to the folder and filename combination
+        (flags: 'w' for write text, 'wb' for write binary, use 'a' instead of 'w' for append)"""
+        result = False
+        if os.path.isdir(folder):
+            try:
+                file_obj = open(os.path.join(folder, filename), flags)
+                file_obj.write(filedata)
+                file_obj.close()
+                result = True
+            except IOError:
+                pass
+        return result
+
+    def _determine_image_type (self, stream_first_4_bytes):
+        """Find out the image file type based on the magic number comparison of the first 4 (or 2) bytes"""
+        file_type = None
+        bytes_as_hex = b2a_hex(stream_first_4_bytes)
+        if bytes_as_hex.startswith('ffd8'):
+            file_type = '.jpeg'
+        elif bytes_as_hex == '89504e47':
+            file_type = '.png'
+        elif bytes_as_hex == '47494638':
+            file_type = '.gif'
+        elif bytes_as_hex.startswith('424d'):
+            file_type = '.bmp'
+        return file_type
+
+    def save_images (self, images_folder):
+        """Try to save the image data from this LTImage object, and return the file name, if successful"""
+        result = None
+        for page in self.pages:
+            for segment in page.segments:
+                for line in segment.lines:
+                    if isinstance(line, LTImage) and line.stream:
+                        file_stream = line.stream.get_rawdata()
+                        if file_stream:
+                            file_ext = self._determine_image_type(file_stream[0:4])
+                            if file_ext:
+                                file_name = ''.join([str(page.page_num), '_', line.name, file_ext])
+                                if self._write_file(images_folder, file_name, file_stream, flags='wb'):
+                                    result = file_name
+        return result
+
+
     def extract_text(self):
         f = codecs.open(self.title.__str__()+".txt", "w", "utf-8")
         for section in self.sections:
@@ -86,11 +138,46 @@ class Article:
         elif style == "segments":
             if xml_file != "":
                 XML_Parser.parse_file(xml_file)
-            for page in self.pages:
-                for segment in page.segments:
-                    tag = "" if xml_file == "" else XML_Parser._find_tag_for_text(segment.text())
-                    segment.tag = tag
-                page.save_segments("./"+self.name+"_segments/")
+
+                used_segments = list()
+                text_list = list()
+                for section in self.sections:
+                    used_segments.extend(section.segments)
+                    text_list.append(section.text())
+
+                for page in self.pages:
+                    for segment in page.segments:
+                        if segment not in used_segments:
+                            text_list.append(segment.text())
+
+                text_list, tags, candidate_matrix = XML_Parser.generate_candidate_matrix(text_list)
+
+                used_segments, used_indexes = [], []
+                for col in range(candidate_matrix.shape[1]):
+                    tag = tags[col][1]
+                    feature = tags[col][0]
+                    min_score = float("inf")
+                    best_index = -1
+                    for i in range(len(text_list)):
+                        score = candidate_matrix[i][col]
+                        if score < min_score:
+                            min_score = score
+                            best_index = i
+
+                    if best_index < len(self.sections):
+                        for segment in self.sections[best_index].segments:
+                            segment.tag = tag
+                            used_segments.append(segment)
+                    else:
+                        for page in self.pages:
+                            for segment in page.segments:
+                                if segment not in used_segments:
+                                    if segment.text() == text_list[best_index]:
+                                        segment.tag = tag
+
+
+                for page in self.pages:
+                    page.save_segments("./"+self.name+"_segments/")
 
 
     def _is_within_flow_bounds(self, segment):
@@ -114,7 +201,7 @@ class Article:
                             if len(current_section) > 0:
                                 self.sections.append(section)
                             current_section = list()
-                        else:
+                        elif math.fabs(segment.font_size - self.default_size) < 1.0: #TODO improve condition, this is merging authors and affiliations together
                             segments_used.append(segment)
                             current_section.append(segment)
 
