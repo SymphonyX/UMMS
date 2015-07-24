@@ -38,8 +38,8 @@ class XML_Parser:
         XML_Parser._process_element(root)
 
         corpus = [k for k, v in parsed_xml.items()]
-        #XML_Parser.VECTORIZER = CountVectorizer(ngram_range=(1, 3), token_pattern=r'\b\w+\b', min_df=1)
-        XML_Parser.VECTORIZER = CountVectorizer(min_df=1)
+        XML_Parser.VECTORIZER = CountVectorizer(ngram_range=(1, 3), token_pattern=r'\b\w+\b', min_df=1)
+        # XML_Parser.VECTORIZER = CountVectorizer(min_df=1)
         XML_Parser.VECTORIZER.fit_transform(corpus)
         analyzer = XML_Parser.VECTORIZER.build_analyzer()
         for k, v in parsed_xml.items():
@@ -127,9 +127,14 @@ class XML_Parser:
                     content += child.text + " "
                 for c in child._children:
                     if c.tag == "xref":
-                        content += c.tail + " "
+                        if c.tail is None:
+                            print "xml or pdf bad format after: ", content
+                        else:
+                            content += c.tail + " "
                     elif c.tag == "italic":
                         content += c.text + " "
+                        if c.tail is not None:
+                            content += c.tail + " "
             elif child.tag == SECTION_TAG:
                 XML_Parser._process_section(child)
 

@@ -107,7 +107,8 @@ if __name__ == "__main__":
     pdfArticle.save_images(image_folder)
     pdfArticle.save_content(xml_file=xml_file, style="segments")
     pdfArticle.extract_text()
-    pdfArticle.plot_stats()
+
+    #pdfArticle.plot_stats()
 
 
 

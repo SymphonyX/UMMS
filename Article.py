@@ -143,41 +143,47 @@ class Article:
                 text_list = list()
                 for section in self.sections:
                     used_segments.extend(section.segments)
-                    text_list.append(section.text())
+                    if section.text() != "":
+                        text_list.append(section.text())
 
                 for page in self.pages:
                     for segment in page.segments:
                         if segment not in used_segments:
-                            text_list.append(segment.text())
+                            if segment.text():
+                                text_list.append(segment.text())
 
                 text_list, tags, candidate_matrix = XML_Parser.generate_candidate_matrix(text_list)
 
-                used_segments, used_indexes = [], []
-                for col in range(candidate_matrix.shape[1]):
-                    tag = tags[col][1]
-                    feature = tags[col][0]
-                    min_score = float("inf")
-                    best_index = -1
-                    for i in range(len(text_list)):
-                        score = candidate_matrix[i][col]
-                        if score < min_score:
-                            min_score = score
-                            best_index = i
+                print candidate_matrix
+                used_segments, used_rows, used_cols = [], [], []
 
-                    if best_index < len(self.sections):
-                        for segment in self.sections[best_index].segments:
-                            segment.tag = tag
+                while len(used_cols) < len(tags):
+                    best_pos = (0, 0)
+                    best_score = float("inf")
+                    for row in range(candidate_matrix.shape[0]):
+                        for col in range(candidate_matrix.shape[1]):
+                            if row not in used_rows and col not in used_cols:
+                                score = candidate_matrix[row][col]
+                                if score < best_score:
+                                    best_score = score
+                                    best_pos = (row, col)
+
+                    used_rows.append(best_pos[0])
+                    used_cols.append(best_pos[1])
+                    if best_pos[0] < len(self.sections):
+                        for segment in self.sections[best_pos[0]].segments:
+                            segment.tag = tags[best_pos[1]][1]
                             used_segments.append(segment)
                     else:
                         for page in self.pages:
                             for segment in page.segments:
                                 if segment not in used_segments:
-                                    if segment.text() == text_list[best_index]:
-                                        segment.tag = tag
+                                    if segment.text() == text_list[best_pos[0]]:
+                                        segment.tag = tags[best_pos[1]][1]
 
 
-                for page in self.pages:
-                    page.save_segments("./"+self.name+"_segments/")
+            for page in self.pages:
+                page.save_segments("./"+self.name+"_segments/")
 
 
     def _is_within_flow_bounds(self, segment):
