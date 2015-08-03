@@ -43,6 +43,7 @@ class Segment:
         self.top_neighbor = None
         self.neighbor_to = list()
         self.tag = ""
+        self.prob_tag = -1
         self.page = -1
 
     def _determine_bounding_box(self):

@@ -12,8 +12,10 @@ from os.path import isfile, splitext, isdir
 import Image
 from os import listdir
 from Article import Article
+from xmlParser import XML_Parser
 #Required packages pdfMiner, ImageMagick
 
+import Tkinter
 
 SEGMENT_TITLE = "TITLE"
 SEGMENT_AUTHORS = "AUTHORS"
@@ -52,11 +54,142 @@ def convert(pdf):
 
 
 
+
+
+def label_assignment_gui(feature_vecs, pdfArticle):
+    print "Starting GUI"
+    window = Tkinter.Tk()
+    window.resizable(width=False, height=False)
+    window.geometry('{}x{}'.format(700, 600))
+
+
+    tags_listbox = Tkinter.Listbox(window)
+    tags_listbox.place(x=10, y=100, height=200, width=100)
+    tagslist_scrollbar = Tkinter.Scrollbar(window)
+    tagslist_scrollbar.place(x=110, y=100, height=200)
+    tagslist_scrollbar.config(command=tags_listbox.yview)
+    tags_listbox.config(yscrollcommand=tagslist_scrollbar.set)
+
+    tags_usage = []
+    for feature, tag in feature_vecs:
+        tags_listbox.insert(Tkinter.END, tag)
+        tags_usage.append(0)
+
+
+    tags_textbox = Tkinter.Text(window)
+    tags_textbox.place(x=130, y=100, height=200, width=500)
+    tagstxt_scrollbar = Tkinter.Scrollbar(window)
+    tagstxt_scrollbar.place(x=630, y=100, height=200)
+    tagstxt_scrollbar.config(command=tags_textbox.yview)
+    tags_textbox.config(yscrollcommand=tagstxt_scrollbar.set)
+
+    global selected_tag_index
+    selected_tag_index = 0
+    tags_textbox.insert(Tkinter.END, feature_vecs[0][0].text)
+
+    label_var = Tkinter.StringVar()
+    tags_label = Tkinter.Label(window, textvariable=label_var)
+    tags_label.place(x=10, y=80, height=20, width=100)
+
+    def onselect(evt):
+        w = evt.widget
+        global selected_tag_index
+        selected_tag_index = int(w.curselection()[0])
+        print "Selected Tag Index: ", selected_tag_index
+        tags_textbox.delete('1.0',Tkinter.END)
+        tags_textbox.insert(Tkinter.END, feature_vecs[selected_tag_index][0].text)
+        label_var.set("Count: " + str(tags_usage[selected_tag_index]))
+
+    tags_listbox.bind('<<ListboxSelect>>', onselect)
+
+    segment_listbox = Tkinter.Listbox(window)
+    segment_listbox.place(x=10, y=350, height=200, width=100)
+    segmentlist_scrollbar = Tkinter.Scrollbar(window)
+    segmentlist_scrollbar.place(x=110, y=350, height=200)
+    segmentlist_scrollbar.config(command=segment_listbox.yview)
+    segment_listbox.config(yscrollcommand=segmentlist_scrollbar.set)
+    count = 0
+    all_segments = []
+    for i, page in enumerate(pdfArticle.pages):
+        for j, segment in enumerate(page.segments):
+            segment_listbox.insert(Tkinter.END, "Segment " + str(count))
+            all_segments.append( (segment, -1) )
+            count += 1
+
+    segment_textbox = Tkinter.Text(window)
+    segment_textbox.place(x=130, y=350, height=200, width=500)
+    segmenttxt_scrollbar = Tkinter.Scrollbar(window)
+    segmenttxt_scrollbar.place(x=630, y=350, height=200)
+    segmenttxt_scrollbar.config(command=segment_textbox.yview)
+    segment_textbox.config(yscrollcommand=segmenttxt_scrollbar.set)
+
+    segment_textbox.insert(Tkinter.END, all_segments[0][0])
+    global index
+    index = 0
+
+
+    labelvar_segment = Tkinter.StringVar()
+    segment_label = Tkinter.Label(window, textvariable=labelvar_segment)
+    segment_label.place(x=10, y=320, height=20, width=100)
+
+    def onsegmentselect(evt):
+        w = evt.widget
+        global index
+        index = int(w.curselection()[0])
+        print "Selected Segment Index: ", index
+        segment_textbox.delete('1.0',Tkinter.END)
+        segment_textbox.insert(Tkinter.END, all_segments[index][0].text())
+        labelvar_segment.set(all_segments[index][0].tag)
+
+
+    segment_listbox.bind('<<ListboxSelect>>', onsegmentselect)
+
+    def button_assign_callback():
+        global selected_tag_index
+        global index
+        tags_usage[selected_tag_index] += 1
+        all_segments[index] = (all_segments[index][0], selected_tag_index)
+        all_segments[index][0].tag = feature_vecs[selected_tag_index][1]
+
+        label_var.set( "Count: " + str(tags_usage[selected_tag_index]) )
+        labelvar_segment.set( all_segments[index][0].tag )
+
+    def button_delete_callback():
+        global index
+        all_segments[index][0].tag = ""
+        labelvar_segment.set( "" )
+        if all_segments[index][1] != -1:
+            tags_usage[all_segments[index][1]] -= 1
+            label_var.set("Count: " + str(tags_usage[all_segments[index][1]]))
+            all_segments[index] = (all_segments[index][0], -1)
+
+    button_assign = Tkinter.Button(window, text="Assign Tag", command=button_assign_callback).place(x=150, y=50, width=100, height=30)
+    button_delete = Tkinter.Button(window, text="Delete Tag", command=button_delete_callback).place(x=150, y=320, width=100, height=30)
+
+
+
+
+    window.mainloop()
+
+
+
+
+
 if __name__ == "__main__":
 
     file_name = sys.argv[1]
     xml_file = sys.argv[2] if len(sys.argv) > 2 else ""
     fp = open(file_name, "rb")
+
+    if xml_file != "":
+        label_mode = raw_input("> Select (A)utomatic or (M)anual label assignment: ")
+        if label_mode == "M" or label_mode == "m":
+            print "Manual label assignment selected"
+        elif label_mode == "A" or label_mode == "a":
+            print "Automatic label assignment selected"
+        else:
+            print "Unrecognized option, defaulting to automatic label assignment"
+            label_mode = "A"
 
     parser = PDFParser(fp)
     document = PDFDocument(parser, "")
@@ -64,11 +197,8 @@ if __name__ == "__main__":
     rsrcmgr = PDFResourceManager()
     laparams = LAParams()
     device = PDFPageAggregator(rsrcmgr, laparams=laparams)
-
     interpreter = PDFPageInterpreter(rsrcmgr, device)
-
     page_images = convert(file_name)
-
     pdf_name = file_name.split(".pdf")[0].split("/")[-1]
 
     if isdir(pdf_name+"_lines"):
@@ -105,8 +235,17 @@ if __name__ == "__main__":
     pdfArticle.identify_num_columns()
     pdfArticle.identify_sections()
     pdfArticle.save_images(image_folder)
-    pdfArticle.save_content(xml_file=xml_file, style="segments")
-    pdfArticle.extract_text()
+
+    if xml_file != "":
+        if label_mode == "A" or label_mode == "a":
+            pdfArticle.assign_labels(xml_file)
+            pdfArticle.print_label_accuracy()
+        else:
+            feature_vecs = XML_Parser.retrieve_tags(xml_file)
+            label_assignment_gui(feature_vecs, pdfArticle)
+
+    pdfArticle.save_content(style="segments")
+    #pdfArticle.extract_text()
 
     #pdfArticle.plot_stats()
 

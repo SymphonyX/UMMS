@@ -131,57 +131,61 @@ class Article:
         for page in self.pages:
             page.concatenate_segments(self.stats_dict)
 
-    def save_content(self, xml_file="", style="lines"):
+    def assign_labels(self, xml_file):
+        XML_Parser.parse_file(xml_file)
+
+        used_segments = list()
+        text_list = list()
+        for section in self.sections:
+            used_segments.extend(section.segments)
+            if section.text() != "":
+                text_list.append(section.text())
+
+        for page in self.pages:
+            for segment in page.segments:
+                if segment not in used_segments and self._is_within_flow_bounds(segment):
+                    if segment.text():
+                        text_list.append(segment.text())
+
+        text_list, tags, candidate_matrix = XML_Parser.generate_candidate_matrix(text_list)
+
+        used_segments, used_rows, used_cols = [], [], []
+        max_distance = np.max(candidate_matrix)
+        min_distance = np.min(candidate_matrix)
+
+        while len(used_cols) < len(tags):
+            best_pos = (0, 0)
+            best_score = float("inf")
+            for row in range(candidate_matrix.shape[0]):
+                for col in range(candidate_matrix.shape[1]):
+                    if row not in used_rows and col not in used_cols:
+                        score = candidate_matrix[row][col]
+                        if score < best_score:
+                            best_score = score
+                            best_pos = (row, col)
+
+            used_rows.append(best_pos[0])
+            used_cols.append(best_pos[1])
+            if best_pos[0] < len(self.sections):
+                for segment in self.sections[best_pos[0]].segments:
+                    segment.tag = tags[best_pos[1]][1]
+                    segment.prob_tag = math.exp( -10* (best_score - min_distance) / (max_distance - min_distance) )
+                    used_segments.append(segment)
+            else:
+                for page in self.pages:
+                    for segment in page.segments:
+                        if segment not in used_segments:
+                            if segment.text() == text_list[best_pos[0]]:
+                                segment.tag = tags[best_pos[1]][1]
+                                segment.prob_tag = math.exp( -10* (best_score - min_distance) / (max_distance - min_distance) )
+
+
+
+    def save_content(self, style="lines"):
         if style == "lines":
             for page in self.pages:
                 page.save_line("./"+self.name+"_lines/")
         elif style == "segments":
-            if xml_file != "":
-                XML_Parser.parse_file(xml_file)
-
-                used_segments = list()
-                text_list = list()
-                for section in self.sections:
-                    used_segments.extend(section.segments)
-                    if section.text() != "":
-                        text_list.append(section.text())
-
-                for page in self.pages:
-                    for segment in page.segments:
-                        if segment not in used_segments:
-                            if segment.text():
-                                text_list.append(segment.text())
-
-                text_list, tags, candidate_matrix = XML_Parser.generate_candidate_matrix(text_list)
-
-                print candidate_matrix
-                used_segments, used_rows, used_cols = [], [], []
-
-                while len(used_cols) < len(tags):
-                    best_pos = (0, 0)
-                    best_score = float("inf")
-                    for row in range(candidate_matrix.shape[0]):
-                        for col in range(candidate_matrix.shape[1]):
-                            if row not in used_rows and col not in used_cols:
-                                score = candidate_matrix[row][col]
-                                if score < best_score:
-                                    best_score = score
-                                    best_pos = (row, col)
-
-                    used_rows.append(best_pos[0])
-                    used_cols.append(best_pos[1])
-                    if best_pos[0] < len(self.sections):
-                        for segment in self.sections[best_pos[0]].segments:
-                            segment.tag = tags[best_pos[1]][1]
-                            used_segments.append(segment)
-                    else:
-                        for page in self.pages:
-                            for segment in page.segments:
-                                if segment not in used_segments:
-                                    if segment.text() == text_list[best_pos[0]]:
-                                        segment.tag = tags[best_pos[1]][1]
-
-
             for page in self.pages:
                 page.save_segments("./"+self.name+"_segments/")
 
@@ -290,6 +294,26 @@ class Article:
         plt.xticks(num, labels)
         plt.show()
 
+    def print_label_accuracy(self):
+        total = 0
+        good = 0
+        threshold = 0.5
+        segments_used = list()
+        for section in self.sections:
+            if section.segments[0].prob_tag != -1:
+                total += 1
+                if section.segments[0].prob_tag > threshold:
+                    good += 1
+            segments_used.extend(section.segments)
+
+        for page in self.pages:
+            for segment in page.segments:
+                if segment not in segments_used and segment.prob_tag != -1:
+                    total += 1
+                    if segment.prob_tag > threshold:
+                        good += 1
+
+        print float(good) / float(total)
 
 
 

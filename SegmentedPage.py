@@ -62,7 +62,10 @@ class Page(LTPage):
             elif style == "segments":
                 bbox = segment.bbox
                 draw.rectangle([bbox[0], self.jpg.size[1]-bbox[3], bbox[2], self.jpg.size[1]-bbox[1]], fill=None, outline="black")
-                draw.text([bbox[0], self.jpg.size[1]-bbox[1]], segment.tag, fill="red")
+                if segment.prob_tag > -1:
+                    draw.text([bbox[0], self.jpg.size[1]-bbox[1]], segment.tag + ": " + str(segment.prob_tag), fill="red")
+                else:
+                    draw.text([bbox[0], self.jpg.size[1]-bbox[1]], segment.tag, fill="red")
                 for line in segment.lines:
                     if line.bbox[1] == line.bbox[3]:
                         bbox = (line.bbox[0], line.bbox[1], line.bbox[2], line.bbox[1]+10)

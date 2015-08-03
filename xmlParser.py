@@ -38,8 +38,8 @@ class XML_Parser:
         XML_Parser._process_element(root)
 
         corpus = [k for k, v in parsed_xml.items()]
-        XML_Parser.VECTORIZER = CountVectorizer(ngram_range=(1, 3), token_pattern=r'\b\w+\b', min_df=1)
-        # XML_Parser.VECTORIZER = CountVectorizer(min_df=1)
+        #XML_Parser.VECTORIZER = CountVectorizer(ngram_range=(1, 3), token_pattern=r'\b\w+\b', min_df=1)
+        XML_Parser.VECTORIZER = CountVectorizer(min_df=1)
         XML_Parser.VECTORIZER.fit_transform(corpus)
         analyzer = XML_Parser.VECTORIZER.build_analyzer()
         for k, v in parsed_xml.items():
@@ -115,6 +115,21 @@ class XML_Parser:
             if child.tag == SECTION_TAG:
                 XML_Parser._process_section(child)
 
+    @staticmethod
+    def _process_caption(element):
+        for child in element._children:
+            if child.tag == "p":
+                content = ""
+                if child.text is not None:
+                    content += child.text
+                for c in child._children:
+                    if c.text is not None:
+                        content += c.text
+                    if c.tail is not None:
+                        content += c.tail + " "
+                #parsed_xml[content] = "caption"
+            #elif child.tag == "title":
+            #   parsed_xml[child.text] = "caption-title"
 
     @staticmethod
     def _process_section(element):
@@ -137,10 +152,23 @@ class XML_Parser:
                             content += c.tail + " "
             elif child.tag == SECTION_TAG:
                 XML_Parser._process_section(child)
+            elif child.tag == CAPTION_TAG:
+                XML_Parser._process_caption(child)
+            elif child.tag == FIGURE_TAG:# or child.tag == "table-wrap":
+                for c in child._children:
+                    if c.tag == CAPTION_TAG:
+                        XML_Parser._process_caption(c)
 
         if content != "":
             parsed_xml[content] = "section-body"
 
+
+    @staticmethod
+    def retrieve_tags(xmlfile):
+        if XML_Parser.VECTORIZER is None:
+            XML_Parser.parse_file(xmlfile)
+
+        return bag_of_words.items()
 
     @staticmethod
     def generate_candidate_matrix(text_list):
