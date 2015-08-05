@@ -13,7 +13,10 @@ import Image
 from os import listdir
 from Article import Article
 from xmlParser import XML_Parser
-#Required packages pdfMiner, ImageMagick
+import tkFileDialog
+import tkMessageBox
+import pickle
+#Required packages pdfMiner, ImageMagick, PIL
 
 import Tkinter
 
@@ -23,37 +26,6 @@ SEGMENT_SECTION_TITLE = "SECTION TITLE"
 SEGMENT_SECTION_BODY = "SECTION BODY"
 SEGMENT_FOOTNOTE = "FOOTNOTE"
 SEGMENT_OTHER = "OTHER"
-
-
-def convert(pdf):
-    '''Convert a PDF to JPG'''
-    if not isfile(pdf):
-        print("ERROR", "Can't find {0}".format(pdf))
-        return
-
-    jpg = splitext(pdf)[0] + ".jpg"
-    name = jpg.split("/")[-1]
-
-
-    check_call(["mkdir", "tmp"])
-    try:
-        check_call(["convert", "-quality", "100%", pdf, "tmp/"+name])
-        print("Converted", "{0} converted".format(pdf))
-    except (OSError, CalledProcessError) as e:
-        print("ERROR", "ERROR: {0}".format(e))
-
-    files = listdir("./tmp")
-    images = [None] * len(files)
-    for f in files:
-        position = int(f.split(".jpg")[0].split("-")[-1])
-        image = Image.open("./tmp/"+f)
-        images[position] = image
-
-    check_call(["rm", "-R", "tmp"])
-    return images
-
-
-
 
 
 def label_assignment_gui(feature_vecs, pdfArticle):
@@ -127,7 +99,6 @@ def label_assignment_gui(feature_vecs, pdfArticle):
     global index
     index = 0
 
-
     labelvar_segment = Tkinter.StringVar()
     segment_label = Tkinter.Label(window, textvariable=labelvar_segment)
     segment_label.place(x=10, y=320, height=20, width=100)
@@ -163,15 +134,68 @@ def label_assignment_gui(feature_vecs, pdfArticle):
             label_var.set("Count: " + str(tags_usage[all_segments[index][1]]))
             all_segments[index] = (all_segments[index][0], -1)
 
+
+    def button_save_callback():
+        save_file = tkFileDialog.asksaveasfile()
+        save_file = open(save_file.name, "w")
+        data = [ pdfArticle.name, pdfArticle.pages, tags_usage, all_segments]
+        pickle.dump(data, save_file)
+        save_file.close()
+
+    def button_load_callback():
+        file_data = tkFileDialog.askopenfile()
+        f = open(file_data.name, "r")
+        data = pickle.load(f)
+        global tags_usage
+        pdfname = data[0]
+        if pdfname != pdfArticle.name:
+            tkMessageBox.showwarning("File Error", "The file you are trying to load does not belong to the processing pdf.")
+        else:
+            pages = data[1]
+            tags_usage = data[2]
+            global all_segments
+            all_segments = data[3]
+            pdfArticle.pages = pages
+
+
     button_assign = Tkinter.Button(window, text="Assign Tag", command=button_assign_callback).place(x=150, y=50, width=100, height=30)
     button_delete = Tkinter.Button(window, text="Delete Tag", command=button_delete_callback).place(x=150, y=320, width=100, height=30)
-
-
+    button_save = Tkinter.Button(window, text="Save Tag File", command=button_save_callback).place(x=300, y=50, width=100, height=30)
+    button_load = Tkinter.Button(window, text="Load Tag File", command=button_load_callback).place(x=400, y=50, width=100, height=30)
 
 
     window.mainloop()
 
 
+
+
+def convert(pdf):
+    '''Convert a PDF to JPG'''
+    if not isfile(pdf):
+        print("ERROR", "Can't find {0}".format(pdf))
+        return
+
+    jpg = splitext(pdf)[0] + ".jpg"
+    name = jpg.split("/")[-1]
+
+    if isdir("tmp"):
+        check_call(["rm", "-R", "tmp"])
+    check_call(["mkdir", "tmp"])
+    try:
+        check_call(["convert", "-quality", "100%", pdf, "tmp/"+name])
+        print("Converted", "{0} converted".format(pdf))
+    except (OSError, CalledProcessError) as e:
+        print("ERROR", "ERROR: {0}".format(e))
+
+    files = listdir("./tmp")
+    images = [None] * len(files)
+    for f in files:
+        position = int(f.split(".jpg")[0].split("-")[-1])
+        image = Image.open("./tmp/"+f)
+        images[position] = image
+
+    check_call(["rm", "-R", "tmp"])
+    return images
 
 
 
