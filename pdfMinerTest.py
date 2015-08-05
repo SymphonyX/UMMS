@@ -15,7 +15,7 @@ from Article import Article
 from xmlParser import XML_Parser
 import tkFileDialog
 import tkMessageBox
-import pickle
+import cPickle
 #Required packages pdfMiner, ImageMagick, PIL
 
 import Tkinter
@@ -42,7 +42,8 @@ def label_assignment_gui(feature_vecs, pdfArticle):
     tagslist_scrollbar.config(command=tags_listbox.yview)
     tags_listbox.config(yscrollcommand=tagslist_scrollbar.set)
 
-    tags_usage = []
+    global tags_usage
+    tags_usage= []
     for feature, tag in feature_vecs:
         tags_listbox.insert(Tkinter.END, tag)
         tags_usage.append(0)
@@ -81,7 +82,8 @@ def label_assignment_gui(feature_vecs, pdfArticle):
     segmentlist_scrollbar.config(command=segment_listbox.yview)
     segment_listbox.config(yscrollcommand=segmentlist_scrollbar.set)
     count = 0
-    all_segments = []
+    global all_segments
+    all_segments= []
     for i, page in enumerate(pdfArticle.pages):
         for j, segment in enumerate(page.segments):
             segment_listbox.insert(Tkinter.END, "Segment " + str(count))
@@ -118,6 +120,8 @@ def label_assignment_gui(feature_vecs, pdfArticle):
     def button_assign_callback():
         global selected_tag_index
         global index
+        global tags_usage
+        global all_segments
         tags_usage[selected_tag_index] += 1
         all_segments[index] = (all_segments[index][0], selected_tag_index)
         all_segments[index][0].tag = feature_vecs[selected_tag_index][1]
@@ -127,6 +131,9 @@ def label_assignment_gui(feature_vecs, pdfArticle):
 
     def button_delete_callback():
         global index
+        global all_segments
+        global tags_usage
+
         all_segments[index][0].tag = ""
         labelvar_segment.set( "" )
         if all_segments[index][1] != -1:
@@ -136,26 +143,41 @@ def label_assignment_gui(feature_vecs, pdfArticle):
 
 
     def button_save_callback():
+        global all_segments
+        global tags_usage
+
         save_file = tkFileDialog.asksaveasfile()
         save_file = open(save_file.name, "w")
-        data = [ pdfArticle.name, pdfArticle.pages, tags_usage, all_segments]
-        pickle.dump(data, save_file)
+        tags = [ (s[0].tag, s[1])  for s in all_segments]
+        data = ( pdfArticle.name, tags_usage, tags)
+        cPickle.dump(data, save_file)
         save_file.close()
 
     def button_load_callback():
+        global tags_usage
+        global all_segments
+        global index
+        global tags_usage
+
         file_data = tkFileDialog.askopenfile()
         f = open(file_data.name, "r")
-        data = pickle.load(f)
-        global tags_usage
+        data = cPickle.load(f)
         pdfname = data[0]
         if pdfname != pdfArticle.name:
             tkMessageBox.showwarning("File Error", "The file you are trying to load does not belong to the processing pdf.")
         else:
-            pages = data[1]
-            tags_usage = data[2]
-            global all_segments
-            all_segments = data[3]
-            pdfArticle.pages = pages
+            tags_usage = data[1]
+            tags = data[2]
+            for i, segment in enumerate(all_segments):
+                segment[0].tag = ""
+                for tup in tags:
+                    if tup[1] == i:
+                        all_segments[tup[1]] = (all_segments[tup[1]][0], tup[1])
+                        all_segments[tup[1]][0].tag = tup[0]
+                        break
+
+            labelvar_segment.set(all_segments[index][0].tag)
+            label_var.set("Count: " + str(tags_usage[selected_tag_index]))
 
 
     button_assign = Tkinter.Button(window, text="Assign Tag", command=button_assign_callback).place(x=150, y=50, width=100, height=30)
@@ -266,6 +288,7 @@ if __name__ == "__main__":
             pdfArticle.print_label_accuracy()
         else:
             feature_vecs = XML_Parser.retrieve_tags(xml_file)
+            feature_vecs.sort(key=lambda x:x[1])
             label_assignment_gui(feature_vecs, pdfArticle)
 
     pdfArticle.save_content(style="segments")

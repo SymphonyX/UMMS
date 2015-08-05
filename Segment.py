@@ -39,7 +39,6 @@ class Segment:
         self.font_size = 0
         self.font_count = dict()
         self.bbox =(float("inf"), float("inf"), float("-inf"), float("-inf"))
-        self.right_neighbor = None
         self.top_neighbor = None
         self.neighbor_to = list()
         self.tag = ""
